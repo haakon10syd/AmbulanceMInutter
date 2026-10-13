@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ravtjek — Nordjylland</title>
+<meta name="theme-color" content="#0d1a21">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ravtjek">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sea:#0d1a21; --panel:#132630; --panel2:#0f2028; --edge:#20404d;
+    --amber:#f0a848; --amber-deep:#8a5410; --uv:#9179f2;
+    --sand:#e8dfcd; --muted:#8ba4ae;
+    --go:#4fae7c; --mid:#f0a848; --wait:#d9584a;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --disp:"Fraunces",Georgia,serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--sea);color:var(--sand);font-family:var(--sans)}
+  body{padding:0 0 48px;font-size:15px;line-height:1.5}
+  .wrap{max-width:680px;margin:0 auto;padding:0 16px}
+
+  .bar{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:18px 0 12px}
+  .bar h1{font-family:var(--disp);font-weight:900;font-size:22px;letter-spacing:-.02em;margin:0}
+  .bar h1 span{color:var(--amber)}
+  .stamp{font-size:12px;color:var(--muted);text-align:right;flex-shrink:0;line-height:1.3}
+
+  button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
+  .refresh{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+    background:var(--amber);color:#241403;border:0;border-radius:11px;padding:13px;
+    font-weight:600;font-size:16px}
+  .refresh:disabled{opacity:.5}
+  .refresh svg{width:17px;height:17px}
+  .spin{animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .nights{display:flex;gap:7px;overflow-x:auto;padding:16px 16px 4px;margin:0 -16px;scrollbar-width:none}
+  .nights::-webkit-scrollbar{display:none}
+  .night{flex:0 0 auto;background:var(--panel2);border:1px solid var(--edge);border-radius:10px;
+    padding:8px 12px;text-align:center;min-width:70px;line-height:1.3}
+  .night b{display:block;font-size:13.5px;font-weight:600}
+  .night i{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:1px}
+  .night[aria-pressed="true"]{background:var(--sand);border-color:var(--sand);color:#12242c}
+  .night[aria-pressed="true"] i{color:#3d5b66}
+
+  #map{margin-top:14px;border-radius:14px;border:1px solid var(--edge);
+    background:#0a1a24;overflow:hidden}
+  #map svg{display:block;width:100%;height:auto}
+  .land{fill:#17323d;stroke:none}
+  .coast{fill:none;stroke:#3b6678;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+  .fjord{fill:none;stroke:#2b4e5e;stroke-width:2.5;stroke-dasharray:7 6;stroke-linecap:round}
+  .pin{stroke:#0a1a24;stroke-width:2;cursor:pointer}
+  .pin.sel{stroke:var(--sand);stroke-width:3}
+  .plabel{fill:var(--sand);font-size:15px;font-family:var(--sans);font-weight:600;
+    paint-order:stroke;stroke:#0a1a24;stroke-width:4;pointer-events:none}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:11px;height:11px;border-radius:50%;flex:none}
+
+  h2{font-family:var(--disp);font-weight:600;font-size:16px;margin:22px 0 10px;letter-spacing:.01em}
+
+  .card{background:var(--panel);border:1px solid var(--edge);border-radius:16px;
+    padding:18px;margin-top:14px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;top:-110px;right:-70px;width:240px;height:240px;
+    border-radius:50%;background:radial-gradient(circle,rgba(240,168,72,.18),transparent 68%)}
+  .card.v-mid::before{background:radial-gradient(circle,rgba(240,168,72,.11),transparent 68%)}
+  .card.v-wait::before{background:radial-gradient(circle,rgba(217,88,74,.13),transparent 68%)}
+  .chead{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+  .cword{font-family:var(--disp);font-weight:900;font-size:25px;line-height:1.08;
+    letter-spacing:-.025em;margin:0}
+  .v-go .cword{color:var(--go)} .v-mid .cword{color:var(--mid)} .v-wait .cword{color:var(--wait)}
+  .cscore{flex-shrink:0;text-align:center}
+  .cscore b{display:block;font-family:var(--disp);font-weight:600;font-size:34px;line-height:1;
+    color:var(--amber);font-variant-numeric:tabular-nums}
+  .cscore i{font-style:normal;font-size:11px;color:var(--muted)}
+  .cwhere{position:relative;font-size:16px;font-weight:600;margin:10px 0 2px}
+  .cwhen{position:relative;font-size:13.5px;color:var(--muted)}
+  .cwhy{position:relative;margin:14px 0 0;padding-top:13px;border-top:1px solid var(--edge);
+    font-size:13.5px;color:#c3d2d8}
+  .lamp{position:relative;display:inline-block;margin-top:12px;background:rgba(145,121,242,.14);
+    border:1px solid rgba(145,121,242,.42);color:#c8bcff;border-radius:8px;
+    padding:6px 11px;font-size:13px;font-weight:600}
+  .danger{position:relative;margin-top:12px;background:rgba(217,88,74,.13);
+    border-left:3px solid var(--wait);border-radius:0 8px 8px 0;padding:10px 12px;font-size:13px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;margin-top:12px;
+    padding-top:12px;border-top:1px solid var(--edge);font-size:13px;position:relative}
+  .grid div{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+  .grid span{color:var(--muted)}
+  .grid em{font-style:normal;font-variant-numeric:tabular-nums}
+
+  /* hvor ravet står */
+  .drift{margin-top:14px;background:var(--panel2);border:1px solid var(--edge);
+    border-radius:14px;padding:15px}
+  .drift > p{margin:0 0 2px;font-size:14px;font-weight:600}
+  .drift .dist{font-family:var(--disp);font-weight:900;font-size:23px;line-height:1.12;
+    letter-spacing:-.02em;color:var(--amber);margin:2px 0 11px}
+  .dband{position:relative;display:flex;height:38px;border-radius:9px;overflow:hidden;
+    border:1px solid var(--edge)}
+  .dseg{flex:1;display:flex;align-items:flex-end;justify-content:center;
+    font-size:9.5px;color:#cfe0e8;padding-bottom:4px}
+  .dseg.s1{flex:0 0 16%;background:#b8a36a;color:#3a3017}
+  .dseg.s2{background:#2d6f93}
+  .dseg.s3{background:#265b7c}
+  .dseg.s4{background:#1d4661}
+  .dmark{position:absolute;top:0;bottom:0;width:3px;background:var(--amber);
+    box-shadow:0 0 0 1px rgba(0,0,0,.35);border-radius:2px}
+  .dsplit{display:flex;gap:6px;margin-top:9px}
+  .dcell{flex:1;text-align:center;background:var(--panel);border:1px solid var(--edge);
+    border-radius:7px;padding:6px 2px}
+  .dcell b{display:block;font-family:var(--disp);font-weight:600;font-size:15px;
+    font-variant-numeric:tabular-nums}
+  .dcell i{font-style:normal;font-size:9.5px;color:var(--muted);display:block;margin-top:1px}
+  .drift small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:10px}
+
+  .water{margin-top:14px;background:var(--panel2);border:1px solid var(--edge);
+    border-radius:14px;padding:15px}
+  .water > p{margin:0 0 4px;font-size:14px;font-weight:600}
+  .water > small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45}
+  .water a{color:var(--amber)}
+  .lognote{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 10px}
+  .logbtn{width:100%;padding:13px;border-radius:10px;border:1px dashed var(--edge);
+    background:transparent;color:var(--sand);font-weight:600}
+  .logform{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:14px}
+  .logform label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  .logform label:first-child{margin-top:0}
+  .logform select,.logform input,.logform textarea{width:100%;font:inherit;font-size:15px;
+    color:var(--sand);background:var(--panel2);border:1px solid var(--edge);
+    border-radius:8px;padding:9px 10px}
+  .logform textarea{min-height:58px;resize:vertical}
+  .logrow2{display:flex;gap:8px}.logrow2>div{flex:1}
+  .res{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .res button{padding:10px 6px;border-radius:8px;border:1px solid var(--edge);
+    background:var(--panel2);font-size:13.5px}
+  .res button[aria-pressed="true"]{background:var(--sand);color:var(--sea);border-color:var(--sand)}
+  .logact{display:flex;gap:8px;margin-top:14px}
+  .logact button{flex:1;padding:12px;border-radius:9px;border:1px solid var(--edge);
+    background:var(--panel2);font-weight:600}
+  .logact .save{background:var(--amber);color:#1a1206;border-color:var(--amber)}
+  .logact button:disabled{opacity:.45}
+  .logerr{color:var(--wait);font-size:13px;margin-top:8px}
+  .entries{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+  .entry{display:flex;gap:11px;align-items:flex-start;background:var(--panel2);
+    border:1px solid var(--edge);border-radius:10px;padding:10px 12px}
+  .entry .ebadge{flex:none;width:30px;height:30px;border-radius:50%;display:grid;
+    place-items:center;font-weight:700;font-size:13px;color:#10181c}
+  .entry .etxt{flex:1;min-width:0}
+  .entry .etxt b{display:block;font-size:14.5px}
+  .entry .etxt i{display:block;font-style:normal;font-size:12px;color:var(--muted);line-height:1.4}
+  .entry .etxt p{margin:4px 0 0;font-size:13px;line-height:1.4;word-break:break-word}
+  .entry .edel{flex:none;background:none;border:none;color:var(--muted);font-size:18px;
+    padding:0 2px;line-height:1}
+  .alt{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    margin:0 0 2px;padding:9px 14px;background:var(--panel2);
+    border:1px solid var(--edge);border-radius:10px}
+  .alt b{font-size:14px;font-weight:600;white-space:nowrap}
+  .alt span{font-size:12.5px;color:var(--muted)}
+  .rtid{flex:none;text-align:right;font-size:13px;font-variant-numeric:tabular-nums;
+    line-height:1.15;color:var(--sand)}
+  .rtid i{display:block;font-style:normal;font-size:10.5px;color:var(--muted)}
+  .best{display:flex;align-items:baseline;gap:10px;margin:14px 0 2px;
+    padding:12px 14px;background:rgba(240,168,72,.10);
+    border:1px solid rgba(240,168,72,.34);border-radius:10px}
+  .best b{font-family:var(--disp);font-weight:900;font-size:23px;
+    letter-spacing:-.02em;color:var(--amber);line-height:1.05;
+    white-space:nowrap;flex:none}
+  .best span{font-size:13px;color:var(--muted);line-height:1.35}
+  .diag{margin:10px 0;padding:10px 12px;background:rgba(0,0,0,.28);
+    border:1px solid var(--edge);border-radius:8px;font-size:12.5px;
+    line-height:1.6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    word-break:break-word;-webkit-user-select:all;user-select:all}
+  .spark{display:block;margin:8px 0 2px}
+  .sparkkey{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin:-4px 0 8px}
+  .sparkkey span{display:inline-flex;align-items:center;gap:5px}
+  .sparkkey i{display:inline-block;width:14px;height:0;border-top:2px solid var(--amber)}
+  .sparkkey i.k2{border-top:2px dashed var(--sand);opacity:.8}
+  .sparkkey i.k3{height:8px;border:none;background:var(--amber);opacity:.25}
+  .sparkax{display:flex;justify-content:space-between;color:var(--muted);
+    font-size:11px;font-variant-numeric:tabular-nums;margin-bottom:8px}
+  .seg{display:flex;gap:6px;margin-top:11px}
+  .seg button{flex:1;background:transparent;border:1px solid var(--edge);border-radius:9px;
+    padding:9px 4px;font-size:12.5px;line-height:1.25}
+  .seg button[aria-pressed="true"]{background:var(--sand);border-color:var(--sand);color:#12242c;font-weight:600}
+
+  .rank{margin-top:8px}
+  .rrow{display:flex;align-items:center;gap:11px;background:var(--panel2);
+    border:1px solid var(--edge);border-radius:11px;padding:10px 13px;margin-bottom:6px;
+    cursor:pointer;width:100%;text-align:left}
+  .rrow[aria-pressed="true"]{border-color:var(--sand)}
+  .rdot{width:11px;height:11px;border-radius:50%;flex:none}
+  .rname{flex:1;min-width:0}
+  .rname b{display:block;font-size:14.5px;font-weight:600}
+  .rname i{font-style:normal;font-size:12px;color:var(--muted)}
+  .rsc{font-family:var(--disp);font-weight:600;font-size:19px;flex:none;
+    font-variant-numeric:tabular-nums}
+
+  .note{color:var(--muted);font-size:12.5px;line-height:1.55;margin-top:22px;
+    padding-top:16px;border-top:1px solid var(--edge)}
+  .err{background:rgba(217,88,74,.13);border:1px solid var(--wait);border-radius:12px;
+    padding:14px;margin-top:16px;font-size:14px}
+  .skel{height:15px;border-radius:5px;background:var(--panel);margin:9px 0}
+  @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="bar">
+    <h1>Ravtjek <span>·</span> Nordjylland</h1>
+    <div class="stamp" id="stamp">henter…</div>
+  </div>
+
+  <button class="refresh" id="btn">
+    <svg id="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+    <span id="btntext">Hent nye data</span>
+  </button>
+
+  <div id="err"></div>
+  <div class="nights" id="nights"></div>
+  <div id="map"></div>
+  <p id="maphint" style="font-size:12px;color:var(--muted);margin:8px 0 0"></p>
+  <div class="legend">
+    <span><i class="dot" style="background:#4fae7c"></i>Tag af sted</span>
+    <span><i class="dot" style="background:#f0a848"></i>Middel</span>
+    <span><i class="dot" style="background:#7d6a52"></i>Tyndt</span>
+    <span><i class="dot" style="background:#d9584a"></i>Ingenting</span>
+  </div>
+
+  <div id="detail">
+    <div class="card"><div class="skel" style="width:60%"></div>
+      <div class="skel" style="width:80%"></div><div class="skel" style="width:40%"></div></div>
+  </div>
+
+  <h2>Alle steder, bedst først</h2>
+  <div class="rank" id="rank"></div>
+
+  <h2>Fangstlog</h2>
+  <div id="log"><p class="lognote">Indlæser…</p></div>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+/* ============ steder ============
+   facing = retningen kysten vender ud mod. Pålandsvind kommer derfra.
+   Hirtshals 314, Blokhus 308 og Slettestrand 336 er Ravudsigtens egne tal.
+   fetchF = hvor meget frit stræk der er til at bygge sø.                   */
+const SPOTS=[
+ {id:'hanstholm',  n:'Hanstholm',       a:'Thy · Skagerrak',  lat:57.121, lon:8.617,  f:340, ff:1.00},
+ {id:'vigso',      n:'Vigsø',           a:'Thy · Skagerrak',  lat:57.115, lon:8.750,  f:352, ff:1.00},
+ {id:'bulbjerg',   n:'Bulbjerg',        a:'Jammerbugten',     lat:57.147, lon:9.016,  f:345, ff:1.00},
+ {id:'thorup',     n:'Thorup Strand',   a:'Jammerbugten',     lat:57.157, lon:9.070,  f:343, ff:1.00},
+ {id:'slette',     n:'Slettestrand',    a:'Jammerbugten',     lat:57.158, lon:9.172,  f:336, ff:1.00, v:1},
+ {id:'tranum',     n:'Tranum Strand',   a:'Jammerbugten',     lat:57.213, lon:9.355,  f:322, ff:1.00},
+ {id:'blokhus',    n:'Blokhus',         a:'Jammerbugten',     lat:57.253, lon:9.579,  f:308, ff:1.00, v:1},
+ {id:'saltum',     n:'Saltum Strand',   a:'Jammerbugten',     lat:57.285, lon:9.650,  f:303, ff:1.00},
+ {id:'lokken',     n:'Løkken',          a:'Jammerbugten',     lat:57.368, lon:9.713,  f:299, ff:1.00, v:1},
+ {id:'nrlyngby',   n:'Nørre Lyngby',    a:'Jammerbugten',     lat:57.420, lon:9.760,  f:292, ff:1.00, v:1},
+ {id:'lonstrup',   n:'Lønstrup',        a:'Jammerbugten',     lat:57.473, lon:9.800,  f:305, ff:1.00, v:1},
+ {id:'skallerup',  n:'Skallerup Klit',  a:'Skagerrak',        lat:57.515, lon:9.860,  f:313, ff:1.00, v:1},
+ {id:'tornby',     n:'Tornby Strand',   a:'Hirtshals',        lat:57.540, lon:9.900,  f:299, ff:1.00, v:1},
+ {id:'hirtshals',  n:'Hirtshals',       a:'Skagerrak',        lat:57.588, lon:9.958,  f:315, ff:1.00, v:1},
+ {id:'kjul',       n:'Kjul Strand',     a:'Skagerrak',        lat:57.600, lon:10.010, f:353, ff:1.00, v:1},
+ {id:'tversted',   n:'Tversted',        a:'Skagerrak',        lat:57.605, lon:10.145, f:343, ff:1.00, v:1},
+ {id:'skiveren',   n:'Skiveren',        a:'Skagerrak',        lat:57.655, lon:10.270, f:329, ff:1.00, v:1},
+ {id:'grenen',     n:'Grenen',          a:'Skagen',           lat:57.740, lon:10.620, f:325, ff:1.00},
+ {id:'sonderstr',  n:'Skagen Sønderstrand',a:'Kattegat',      lat:57.715, lon:10.595, f:95,  ff:0.85},
+ {id:'aalbaek',    n:'Ålbæk',           a:'Kattegat',         lat:57.598, lon:10.420, f:85,  ff:0.85},
+ {id:'jerup',      n:'Jerup',           a:'Kattegat',         lat:57.525, lon:10.470, f:86,  ff:0.85},
+ {id:'frhavn',     n:'Frederikshavn',   a:'Kattegat',         lat:57.430, lon:10.550, f:99,  ff:0.85, v:1},
+ {id:'saeby',      n:'Sæby',            a:'Kattegat',         lat:57.335, lon:10.530, f:80,  ff:0.85, v:1},
+ {id:'lyngsaa',    n:'Lyngså',          a:'Kattegat',         lat:57.235, lon:10.500, f:86,  ff:0.85, v:1},
+ {id:'voersaa',    n:'Voerså',          a:'Kattegat',         lat:57.195, lon:10.475, f:137, ff:0.85, v:1},
+ {id:'asaa',       n:'Asaa',            a:'Kattegat',         lat:57.148, lon:10.420, f:105, ff:0.85, v:1},
+ {id:'hou',        n:'Hou',             a:'Kattegat',         lat:57.028, lon:10.320, f:100, ff:0.85, v:1},
+ {id:'hals',       n:'Hals',            a:'Kattegat',         lat:56.995, lon:10.315, f:109, ff:0.80, v:1},
+ {id:'egense',     n:'Egense',          a:'Limfjorden',       lat:56.975, lon:10.280, f:354, ff:0.25, v:1},
+ {id:'storvorde',  n:'Nord for Storvorde',a:'Limfjorden',     lat:57.005, lon:10.150, f:355, ff:0.22},
+ {id:'egholm',     n:'Egholm Vest',     a:'Limfjorden',       lat:57.053, lon:9.855,  f:266, ff:0.20, v:1},
+ {id:'logstor',    n:'Løgstør',         a:'Limfjorden',       lat:56.965, lon:9.255,  f:350, ff:0.25},
+ {id:'thisted',    n:'Thisted',         a:'Limfjorden',       lat:56.955, lon:8.695,  f:5,   ff:0.22}
+];
+
+const WATER={
+  auto: {label:'Automatisk',         f:null, txt:'målt vandstand'},
+  low:  {label:'Lav eller faldende', f:1.00, txt:'lav/faldende vandstand'},
+  unk:  {label:'Ved det ikke',       f:0.90, txt:'vandstand ukendt'},
+  high: {label:'Stigende',           f:0.75, txt:'stigende vandstand'}
+};
+
+/* DMI Frie Data — målte observationer, ingen nøgle.
+   Kun disse otte stationer i Nordjylland leverer faktisk data; de øvrige
+   i DMI's liste (06029 Grønlandshavnen, 06042/06043 Frederikshavn,
+   06034 Sindal, 06044 Hals, 20012 Kandestederne) svarer tomt.
+   kind:'coast' står ved åbent vand og repræsenterer vinden over havet;
+   kind:'land' ligger inde i landet og bruges kun til fjordkysterne,
+   som reelt er lige så afskærmede.                                      */
+const DMI_URL='https://opendataapi.dmi.dk/v2/metObs/collections/observation/items';
+const STATIONS=[
+  {id:'06021', n:'Hanstholm Fyr',        lat:57.1125, lon:8.5991,  kind:'coast'},
+  {id:'06033', n:'Hirtshals Fyr',        lat:57.5845, lon:9.9421,  kind:'coast'},
+  {id:'06041', n:'Skagen Fyr',           lat:57.7364, lon:10.6316, kind:'coast'},
+  {id:'06032', n:'Stenh\u00f8j',             lat:57.3828, lon:10.3349, kind:'land'},
+  {id:'06031', n:'Tylstrup',             lat:57.1852, lon:9.9527,  kind:'land'},
+  {id:'06030', n:'Flyvestation Aalborg', lat:57.0963, lon:9.8505,  kind:'land'},
+  {id:'06019', n:'Silstrup',             lat:56.9300, lon:8.6412,  kind:'land'},
+  {id:'06063', n:'R\u00f8nbjerg Huse Havn',  lat:56.8910, lon:9.1654,  kind:'land'}
+];
+const MAXKM=90;   /* længere væk end dette regnes målingen ikke som dækkende */
+
+/* Vandstand, to kilder fra DMI oceanObs, begge uden nøgle:
+   - tidewater: tidevandstabel hvert tiende minut, udgivet langt frem
+     (rent astronomisk tidevand, ingen vindstuvning)
+   - observation/sealev_dvr: målt stand i cm over DVR90
+   - observation/sea_reg: DMI's registrerede stand; sådan melder
+     fjordmålerne. Nulpunktet er ikke dokumenteret, men tallene ligger
+     tæt på DVR90 og følger tabellen, så de bruges mest for udviklingen.
+   Målinger findes ved Hanstholm, Hirtshals og Frederikshavn (sealev_dvr)
+   og ved Thisted og Haverslev i Limfjorden (sea_reg). Skagen, Hals Havn,
+   Hals Barre, Aalborg og Løgstør har kun tabellen.                     */
+const OCEAN_URL='https://opendataapi.dmi.dk/v2/oceanObs/collections/observation/items';
+const TIDE_URL ='https://opendataapi.dmi.dk/v2/oceanObs/collections/tidewater/items';
+const TSTN=[
+  {id:'21009', n:'Hanstholm',        lat:57.1200, lon:8.5955,  kind:'coast', obs:'sealev_dvr'},
+  {id:'20047', n:'Hirtshals',        lat:57.5951, lon:9.9625,  kind:'coast', obs:'sealev_dvr'},
+  {id:'20002', n:'Skagen Havn',      lat:57.7165, lon:10.5951, kind:'coast'},
+  {id:'20101', n:'Frederikshavn',    lat:57.4357, lon:10.5479, kind:'coast', obs:'sealev_dvr'},
+  {id:'20252', n:'Hals Barre',       lat:56.9547, lon:10.4255, kind:'coast'},
+  {id:'20262', n:'Hals Havn',        lat:56.9901, lon:10.3084, kind:'fjord'},
+  {id:'20299', n:'Grønlandshavnen',  lat:57.0486, lon:10.0520, kind:'fjord'},
+  {id:'20303', n:'Aalborg Øst',      lat:57.0525, lon:9.9576,  kind:'fjord'},
+  {id:'20333', n:'Haverslev Havn',   lat:57.0284, lon:9.4017,  kind:'fjord', obs:'sea_reg'},
+  {id:'20423', n:'Løgstør',          lat:56.9678, lon:9.2459,  kind:'fjord'},
+  {id:'20412', n:'Rønbjerg Huse',    lat:56.8924, lon:9.1668,  kind:'fjord'},
+  {id:'21058', n:'Thisted',          lat:56.9538, lon:8.6941,  kind:'fjord', obs:'sea_reg'}
+];
+/* længere fra en måler end dette hænges kurven ikke op på en måling.
+   Fjorden er strammere: vandstanden kan stå helt forskelligt i hver ende. */
+const OBS_MAXKM={coast:80, fjord:35};
+
+let DATA=null, NIGHTS=[], night=0, water='auto', loading=false,
+    measured=null, WL=null, sel='hirtshals', map=null, markers={};
+
+/* ============ hentning ============ */
+const FURL='https://api.open-meteo.com/v1/forecast?latitude='+SPOTS.map(s=>s.lat).join(',')+
+  '&longitude='+SPOTS.map(s=>s.lon).join(',')+
+  '&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation'+
+  '&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FCopenhagen&past_days=4&forecast_days=6';
+
+async function load(){
+  if(loading) return; loading=true;
+  const b=document.getElementById('btn');
+  b.disabled=true; document.getElementById('ico').classList.add('spin');
+  document.getElementById('btntext').textContent='Henter…';
+  document.getElementById('err').innerHTML='';
+  try{
+    const r=await fetch(FURL);
+    if(!r.ok) throw new Error('Vejrdata svarede '+r.status);
+    let f=await r.json(); if(!Array.isArray(f)) f=[f];
+    DATA=SPOTS.map((s,i)=>({spot:s, wx:f[i]}));
+    DATA.fetched=new Date();
+    if(!DATA[0].wx||!DATA[0].wx.hourly) throw new Error('Vejrdata kom uden timeværdier');
+
+    const [m,wl]=await Promise.all([loadMeasured(),loadWater()]);
+    measured=m; WL=wl;
+    if(measured) patchMeasured();
+
+    buildNights(); render();
+  }catch(e){
+    document.getElementById('err').innerHTML=
+      '<div class="err"><b>Kunne ikke hente data.</b><br>'+e.message+
+      '<br><br>Kører en test af hver vært…</div>';
+    diag(e);
+    document.getElementById('detail').innerHTML='';
+    document.getElementById('rank').innerHTML='';
+    document.getElementById('nights').innerHTML='';
+    document.getElementById('stamp').textContent='ingen data';
+  }
+  loading=false; b.disabled=false;
+  document.getElementById('ico').classList.remove('spin');
+  document.getElementById('btntext').textContent='Hent nye data';
+}
+
+/* ============ diagnose ============
+   Når en hentning fejler, siger browseren bare "Load failed". Her prøves
+   hver vært for sig, så det kan ses hvem der blokerer og hvorfor.        */
+async function diag(orig){
+  const probes=[
+    ['Open-Meteo','https://api.open-meteo.com/v1/forecast?latitude=57.6&longitude=10&hourly=wind_speed_10m&forecast_days=1'],
+    ['DMI vind','https://opendataapi.dmi.dk/v2/metObs/collections/observation/items?stationId=06033&parameterId=wind_speed&limit=1'],
+    ['DMI vandstand','https://opendataapi.dmi.dk/v2/oceanObs/collections/observation/items?stationId=20047&parameterId=sealev_dvr&limit=1']
+  ];
+  const out=[];
+  for(const [navn,u] of probes){
+    const t0=Date.now();
+    try{
+      const r=await fetch(u,{cache:'no-store'});
+      out.push(navn+': HTTP '+r.status+' efter '+(Date.now()-t0)+' ms'+
+        (r.ok?' — svarer':' — afvist'));
+    }catch(err){
+      out.push(navn+': '+(err&&err.name||'Fejl')+' — '+(err&&err.message||'ukendt')+
+        ' efter '+(Date.now()-t0)+' ms');
+    }
+  }
+  document.getElementById('err').innerHTML=
+    '<div class="err"><b>Kunne ikke hente data.</b><br>'+(orig?orig.message:'')+
+    '<div class="diag"><b>Diagnose</b><br>Side: '+location.protocol+'//'+location.hostname+
+    '<br>'+out.join('<br>')+'</div>'+
+    'Send det der står under Diagnose — så kan jeg se hvad der blokerer.</div>';
+}
+
+/* ============ målte observationer fra DMI ============
+   Otte stationer hentes, og hver kyst får et afstandsvægtet gennemsnit af
+   dem der passer til dens eksponering. Retninger midles cirkulært, så 350°
+   og 10° giver 0° og ikke 180°.                                          */
+function km(aLat,aLon,bLat,bLon){
+  const R=6371, dLat=(bLat-aLat)*Math.PI/180, dLon=(bLon-aLon)*Math.PI/180;
+  const m=(aLat+bLat)/2*Math.PI/180;
+  const x=dLon*Math.cos(m);
+  return R*Math.sqrt(dLat*dLat+x*x);
+}
+
+async function loadMeasured(){
+  const end=new Date(), start=new Date(end.getTime()-96*3600*1000);
+  const span=start.toISOString().slice(0,19)+'Z/'+end.toISOString().slice(0,19)+'Z';
+  const get=async (st,p)=>{
+    try{
+      const r=await fetch(DMI_URL+'?stationId='+st.id+'&parameterId='+p+
+        '&datetime='+encodeURIComponent(span)+'&limit=700');
+      if(!r.ok) return [];
+      return (await r.json()).features||[];
+    }catch(e){ return []; }
+  };
+  const res=await Promise.all(STATIONS.map(async st=>{
+    const [sp,di]=await Promise.all([get(st,'wind_speed'),get(st,'wind_dir')]);
+    if(!sp.length) return null;
+    const binned={};
+    sp.forEach(x=>{ const t=x.properties.observed.slice(0,13);
+      (binned[t]=binned[t]||{s:[],dx:0,dy:0,dn:0}).s.push(x.properties.value); });
+    di.forEach(x=>{ const t=x.properties.observed.slice(0,13);
+      const b=binned[t]=binned[t]||{s:[],dx:0,dy:0,dn:0};
+      const a=x.properties.value*Math.PI/180;
+      b.dx+=Math.cos(a); b.dy+=Math.sin(a); b.dn++; });
+    const o={};
+    Object.keys(binned).forEach(t=>{ const b=binned[t]; if(!b.s.length) return;
+      o[t]={ws:b.s.reduce((a,c)=>a+c,0)/b.s.length,
+            dir:b.dn?(Math.atan2(b.dy,b.dx)*180/Math.PI+360)%360:null}; });
+    return Object.keys(o).length?{st,obs:o}:null;
+  }));
+  const live=res.filter(Boolean);
+  return live.length?live:null;
+}
+
+/* Hvilke stationer hører til denne kyst, og med hvilken vægt?
+   Åbne kyster ser kun fyrene; fjordkysterne kun indlandsstationerne.    */
+function sourcesFor(spot){
+  const want = spot.ff>=0.5 ? 'coast' : 'land';
+  const cand=measured.filter(m=>m.st.kind===want)
+    .map(m=>({m, d:km(spot.lat,spot.lon,m.st.lat,m.st.lon)}))
+    .filter(x=>x.d<=MAXKM)
+    .sort((a,b)=>a.d-b.d)
+    .slice(0,3);
+  if(!cand.length) return null;
+  const w=cand.map(x=>1/Math.max(1,x.d*x.d));
+  const sum=w.reduce((a,c)=>a+c,0);
+  return cand.map((x,i)=>({st:x.m.st, obs:x.m.obs, d:x.d, w:w[i]/sum}));
+}
+
+function patchMeasured(){
+  DATA.forEach(rec=>{
+    rec.measuredHours=0; rec.sources=null;
+    if(!rec.wx.hourly) return;
+    const src=sourcesFor(rec.spot);
+    if(!src) return;
+    rec.sources=src;
+    const H=rec.wx.hourly; let n=0;
+    H.time.forEach((t,i)=>{
+      const loc=new Date(t+':00');
+      const key=new Date(loc.getTime()-loc.getTimezoneOffset()*60000).toISOString().slice(0,13);
+      let ws=0, dx=0, dy=0, wsum=0, dsum=0;
+      src.forEach(o=>{ const m=o.obs[key]; if(!m) return;
+        ws+=m.ws*o.w; wsum+=o.w;
+        if(m.dir!=null){ const a=m.dir*Math.PI/180;
+          dx+=Math.cos(a)*o.w; dy+=Math.sin(a)*o.w; dsum+=o.w; } });
+      if(wsum>0){
+        H.wind_speed_10m[i]=ws/wsum;
+        if(dsum>0) H.wind_direction_10m[i]=(Math.atan2(dy,dx)*180/Math.PI+360)%360;
+        n++;
+      }
+    });
+    rec.measuredHours=n;
+  });
+}
+
+/* ============ vandstand: tidevandstabel + målinger ============ */
+
+/* Hvilken tidevandsstation og hvilken måler hører til en kyst?
+   Åbne kyster ser kun kyststationer, fjordkyster kun fjordstationer.
+   Måleren kan godt være en anden end tidevandsstationen: det målte
+   overskud ud over tidevandet (stuvningen) er glat over store afstande. */
+function waterSrc(spot){
+  if(spot._w) return spot._w;
+  const kind = spot.ff>=0.5 ? 'coast' : 'fjord';
+  const near=list=>list.map(t=>({t, d:km(spot.lat,spot.lon,t.lat,t.lon)}))
+                       .sort((x,y)=>x.d-y.d)[0]||null;
+  const tide=near(TSTN.filter(t=>t.kind===kind));
+  let obs = near(TSTN.filter(t=>t.obs && t.kind===kind));
+  if(obs && obs.d>OBS_MAXKM[kind]) obs=null;
+  return spot._w={tide, obs};
+}
+
+async function loadWater(){
+  const now=Date.now();
+  const need=new Set();
+  SPOTS.forEach(s=>{ const w=waterSrc(s);
+    if(w.tide) need.add(w.tide.t.id);
+    if(w.obs){ need.add(w.obs.t.id); } });
+  TSTN.filter(t=>t.obs).forEach(t=>need.add(t.id));
+  const iso=ms=>new Date(ms).toISOString().slice(0,19)+'Z';
+  const pspan=iso(now-15*3600e3)+'/'+iso(now+7*24*3600e3);
+  const ospan=iso(now-14*3600e3)+'/'+iso(now);
+
+  const pred=async id=>{
+    try{
+      const r=await fetch(TIDE_URL+'?stationId='+id+'&datetime='+encodeURIComponent(pspan)+'&limit=1300');
+      if(!r.ok) return null;
+      const f=(await r.json()).features||[];
+      const pts=f.map(x=>[Date.parse(x.properties.predictionTime), x.properties.value])
+                 .filter(x=>!isNaN(x[0]) && x[1]!=null).sort((a,b)=>a[0]-b[0]);
+      return pts.length>=2 ? {t:pts.map(x=>x[0]), v:pts.map(x=>x[1])} : null;
+    }catch(e){ return null; }
+  };
+  const obs=async st=>{
+    try{
+      const r=await fetch(OCEAN_URL+'?stationId='+st.id+'&parameterId='+st.obs+
+        '&datetime='+encodeURIComponent(ospan)+'&limit=300');
+      if(!r.ok) return null;
+      const f=(await r.json()).features||[];
+      const pts=f.map(x=>({t:new Date(x.properties.observed), v:x.properties.value}))
+                 .filter(x=>x.v!=null && !isNaN(x.t)).sort((a,b)=>a.t-b.t);
+      if(pts.length<2) return null;
+      const last=pts[pts.length-1];
+      /* hældning over de sidste tre timer, mindste kvadraters metode */
+      const cut=new Date(last.t.getTime()-3*3600e3), w=pts.filter(x=>x.t>=cut);
+      let slope=0;
+      if(w.length>=3){
+        const h=w.map(x=>(x.t-w[0].t)/3600e3);
+        const mh=h.reduce((a,c)=>a+c,0)/h.length, mv=w.reduce((a,c)=>a+c.v,0)/w.length;
+        let sn=0,sd=0; h.forEach((x,i)=>{ sn+=(x-mh)*(w[i].v-mv); sd+=(x-mh)*(x-mh); });
+        if(sd>0) slope=sn/sd;
+      }
+      return {now:last.v, at:last.t, slope:Math.round(slope*10)/10, pts};
+    }catch(e){ return null; }
+  };
+
+  const ids=[...need], obsSt=TSTN.filter(t=>t.obs), obsIds=obsSt.map(t=>t.id);
+  const [P,O]=await Promise.all([Promise.all(ids.map(pred)), Promise.all(obsSt.map(obs))]);
+  const out={pred:{}, obs:{}}; let any=false;
+  ids.forEach((id,i)=>{ if(P[i]){ out.pred[id]=P[i]; any=true; } });
+  obsIds.forEach((id,i)=>{ if(O[i]){ out.obs[id]=O[i]; any=true; } });
+  return any?out:null;
+}
+
+/* Tidevand ved et tidspunkt, lineært mellem tabelværdierne. */
+function tideAt(P, when){
+  if(!P) return null;
+  const x=+when, T=P.t;
+  if(x<T[0]||x>T[T.length-1]) return null;
+  let lo=0, hi=T.length-1;
+  while(hi-lo>1){ const m=(lo+hi)>>1; if(T[m]<=x) lo=m; else hi=m; }
+  const f = T[hi]===T[lo] ? 0 : (x-T[lo])/(T[hi]-T[lo]);
+  return P.v[lo]+(P.v[hi]-P.v[lo])*f;
+}
+
+/* Vindstuvning i cm. Pålandsvind stuver vandet op, fralandsvind trækker det ud.
+   Kvadratisk i vindens kystkomposant, skaleret så 15 m/s pålands giver ~60 cm. */
+function setup(rec,i){
+  const H=rec.wx.hourly, ws=H.wind_speed_10m[i];
+  if(ws==null) return 0;
+  const v=ws*onshore(H.wind_direction_10m[i], rec.spot.f)*rec.spot.ff;
+  return 0.27*v*Math.abs(v);
+}
+
+/* Vandstand ved time i:
+     tidevand(t) + vindstuvning(t) + uforklaret rest
+   Resten er målt nu minus tidevand nu minus min stuvning nu — alt det
+   modellen ikke selv kan regne ud. Den gælder fuldt lige nu og klinger
+   af med et døgns halveringstid, fordi den slags forskelle ikke varer.
+   Uden måler i nærheden er resten ukendt: så er det tidevand og stuvning
+   alene, og panelet siger det.                                          */
+function levelAt(rec,i){
+  if(!WL) return null;
+  const w=waterSrc(rec.spot); if(!w.tide) return null;
+  const P=WL.pred[w.tide.t.id]; if(!P) return null;
+  const T=rec.wx.hourly.time, ni=nowIdx(T);
+  if(ni<0) return null;
+  const at=new Date(T[i]+':00');
+  const tv=tideAt(P,at); if(tv==null) return null;
+  let rest=null;
+  if(w.obs){
+    const O=WL.obs[w.obs.t.id], Po=WL.pred[w.obs.t.id];
+    if(O&&Po){ const tn=tideAt(Po,O.at); if(tn!=null) rest=O.now-tn-setup(rec,ni); }
+  }
+  const h=Math.max(0,i-ni);
+  const v = tv + setup(rec,i) + (rest==null?0:rest*Math.exp(-h/24));
+  return {v, anchored:rest!=null, tide:tv, reg: !!(w.obs && w.obs.t.obs==='sea_reg')};
+}
+
+function waterFactor(rec,start,stop){
+  if(water!=='auto') return {f:WATER[water].f, txt:WATER[water].txt, auto:false};
+  const A=levelAt(rec,start), B=levelAt(rec,stop);
+  if(!A||!B) return {f:WATER.unk.f, txt:'vandstand ukendt', auto:false};
+  const a=A.v, b=B.v, d=b-a, mean=(a+b)/2;
+  const ft = d<=-8?1.00 : d<=-2?0.95 : d<2?0.88 : d<8?0.78 : 0.70;
+  /* niveauet tæller kun hvor nulpunktet er kendt (DVR90) */
+  const fl = A.reg ? 0.93 : mean<=-20?1.00 : mean<=0?0.97 : mean<=20?0.90 : mean<=40?0.82 : 0.72;
+  let f=Math.max(0.60,Math.min(1.00,ft*fl));
+  /* uden måling kender vi retningen bedre end niveauet: halv vægt */
+  if(!A.anchored) f=0.5*Math.max(0.60,Math.min(1.00,ft*0.93))+0.5*WATER.unk.f;
+  const dir = d<=-2?'faldende' : d<2?'næsten stillestående' : 'stigende';
+  return {f, auto:true, anchored:A.anchored, reg:A.reg, from:a, to:b, delta:d, mean,
+          txt: A.anchored ? dir+' vandstand omkring '+Math.round(mean)+' cm'
+                          : dir+' tidevand (uden måling)'};
+}
+
+/* ============ hjælpere ============ */
+const pad=n=>String(n).padStart(2,'0');
+const isoDay=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function idx(times,key){ return times.indexOf(key); }
+function onshore(dirFrom,facing){ return Math.cos((dirFrom-facing)*Math.PI/180); }
+const CARD={N:'N',NNE:'NNØ',NE:'NØ',ENE:'ØNØ',E:'Ø',ESE:'ØSØ',SE:'SØ',SSE:'SSØ',S:'S',
+  SSW:'SSV',SW:'SV',WSW:'VSV',W:'V',WNW:'VNV',NW:'NV',NNW:'NNV'};
+function card(d){
+  const k=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return CARD[k[Math.round(((d%360)/22.5))%16]];
+}
+const hhmm=iso=>iso?new Date(iso).toTimeString().slice(0,5):'–';
+
+function buildNights(){
+  const t=DATA[0].wx.hourly.time, today=new Date(), out=[];
+  for(let k=0;k<6;k++){
+    const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+k);
+    if(idx(t,isoDay(d)+'T00:00')>=0) out.push({date:d,key:isoDay(d)});
+  }
+  NIGHTS=out; if(night>=NIGHTS.length) night=0;
+}
+
+/* ============ vurdering ============
+   Intet fast jagtvindue. Appen gennemløber alle døgnets timer og finder
+   det bedste sammenhængende vindue selv. For i dag springes timer over,
+   der allerede er gået.                                                  */
+const WIN=3;                       /* vinduets længde i timer */
+
+function nowIdx(T){
+  const d=new Date();
+  return idx(T, isoDay(d)+'T'+pad(d.getHours())+':00');
+}
+
+function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
+  const s=rec.spot;
+  const last=Math.min(start+WIN-1, T.length-1);
+  if(H.wind_speed_10m[start]==null) return null;
+
+  /* fase 1: hvad har revet løs i de 48 timer før vinduet */
+  let peak=0, peakI=-1, sustained=0;
+  for(let i=Math.max(0,start-48); i<start; i++){
+    const ws=H.wind_speed_10m[i]; if(ws==null) continue;
+    const c=onshore(H.wind_direction_10m[i], s.f);
+    const eff = c>0 ? ws*c*s.ff : 0;
+    if(eff>peak){ peak=eff; peakI=i; }
+    if(eff>=10) sustained++;          /* Håkons tærskel */
+  }
+  const hoursSince = peakI<0 ? null : start-peakI;
+
+  /* fase 2: forholdene i selve vinduet */
+  let ws=0,gu=0,dirs=[],pr=0,n=0;
+  for(let i=start;i<=last;i++){
+    if(H.wind_speed_10m[i]==null) continue;
+    ws+=H.wind_speed_10m[i]; gu=Math.max(gu,H.wind_gusts_10m[i]||0);
+    dirs.push(H.wind_direction_10m[i]); pr+=H.precipitation[i]||0; n++;
+  }
+  if(!n) return null;
+  ws=ws/n;
+  let dx=0,dy=0; dirs.forEach(d=>{dx+=Math.cos(d*Math.PI/180);dy+=Math.sin(d*Math.PI/180);});
+  const dir=(Math.atan2(dy,dx)*180/Math.PI+360)%360;
+  const comp=onshore(dir,s.f), compWind=ws*comp;
+
+  const energy=Math.min(1,peak/16), duration=Math.min(1,sustained/14);
+  let timing=0.05;
+  if(hoursSince!==null && peak>=5){
+    const h=hoursSince;
+    if(h<6) timing=0.22;
+    else if(h<12) timing=0.22+(h-6)/6*0.63;
+    else if(h<=36) timing=1.00;
+    else if(h<=48) timing=1.00-(h-36)/12*0.45;
+    else if(h<=72) timing=0.55-(h-48)/24*0.40;
+    else timing=0.10;
+  }
+  const calm = compWind<0?1.00 : compWind<4?0.88 : compWind<8?0.70 : 0.50;
+  const wf=waterFactor(rec,start,last);
+  const score=Math.round((0.5*energy+0.5*duration)*timing*calm*wf.f*100)/10;
+
+  /* mørke straffer ikke længere — det afgør kun om ravlampen virker.
+     Både aftenen efter solnedgang og timerne før daggry tælles som mørke,
+     og vinduet regnes mørkt når mindst halvdelen af timerne er det.      */
+  let dk=0;
+  for(let i=start;i<=last;i++){
+    const t=new Date(new Date(T[i]).getTime()+1800*1000);   /* timens midte */
+    if((darkFrom&&t>=darkFrom)||(lightFrom&&t<=lightFrom)) dk++;
+  }
+  const dark = dk*2 >= (last-start+1);
+  const t1=new Date(new Date(T[last]).getTime()+3600*1000);
+
+  return {spot:s, score, peak, hoursSince, sustained, ws, gu, dir, comp, compWind,
+          rain:pr, startIdx:start, stopIdx:last, dark, wf,
+          from:T[start].slice(11,16),
+          to:pad(t1.getHours())+':00'};
+}
+
+function assess(rec,nk){
+  const H=rec.wx.hourly, T=H.time;
+  const day0=idx(T,nk+'T00:00');
+  if(day0<0) return null;
+
+  const di=rec.wx.daily?rec.wx.daily.time.indexOf(nk):-1;
+  const sunset=di>=0?rec.wx.daily.sunset[di]:null;
+  const sunrise=di>=0?rec.wx.daily.sunrise[di]:null;
+  const darkFrom=sunset?new Date(new Date(sunset).getTime()+75*60000):null;
+  const lightFrom=sunrise?new Date(new Date(sunrise).getTime()-45*60000):null;
+
+  const ni=nowIdx(T);
+  const earliest = (ni>=day0 && ni<day0+24) ? ni : day0;
+
+  /* Mørke og dagslys holdes adskilt, så begge kan vises. Det bedste
+     mørke vindue duer kun med ravlampen; det bedste lyse er for de
+     ture hvor man leder med øjnene.                                 */
+  let bD=null, bL=null;
+  for(let st=earliest; st<day0+24 && st<T.length; st++){
+    const r=scoreWindow(rec,H,T,st,darkFrom,lightFrom);
+    if(!r) continue;
+    if(r.dark){ if(!bD || r.score>bD.score) bD=r; }
+    else      { if(!bL || r.score>bL.score) bL=r; }
+  }
+  if(!bD && !bL) return null;
+
+  /* ved lige score vinder mørke, fordi lampen så virker */
+  let best, alt;
+  if(!bL)                      { best=bD; alt=null; }
+  else if(!bD)                 { best=bL; alt=null; }
+  else if(bD.score>=bL.score)  { best=bD; alt=bL;  }
+  else                         { best=bL; alt=bD;  }
+
+  best.alt=alt;
+  best.noLight = !bL;          /* intet dagslys tilbage i døgnet */
+  best.noDark  = !bD;
+  best.sunset=sunset; best.sunrise=sunrise; best.darkFrom=darkFrom;
+  return best;
+}
+
+/* ============ hvor ravet står ============
+   Grov driftmodel, kalibreret mod Ravudsigtens placeringsvisning for Tranum
+   (80 m ved blæstens slut, 40 m efter 8 timer, 20 m efter 15).            */
+function drift(rec, stopIdx){
+  const s=rec.spot, H=rec.wx.hourly;
+  let d=null;
+  for(let i=Math.max(0,stopIdx-96); i<=stopIdx; i++){
+    const ws=H.wind_speed_10m[i]; if(ws==null) continue;
+    const c=onshore(H.wind_direction_10m[i], s.f);
+    const eff = c>0 ? ws*c*s.ff : 0;
+    const off = c<0 ? ws*(-c)*s.ff : 0;
+    if(eff>=10){ const lift=80+6*Math.min(12,eff-10); d = d==null?lift:Math.max(d,lift); }
+    else if(d!=null){
+      if(off>3) d+=0.35*off; else d-=0.45*eff;
+      d=Math.max(0,Math.min(1500,d));
+    }
+  }
+  return d;
+}
+function split(d){
+  if(d==null) return null;
+  const w=[0,0,0,0];
+  for(let k=0;k<160;k++){
+    const x=d+(k/159-0.5)*Math.max(200,d*2.2);
+    if(x<=0) w[0]++; else if(x<=100) w[1]++; else if(x<=500) w[2]++; else w[3]++;
+  }
+  const n=w.reduce((a,c)=>a+c,0);
+  return w.map(v=>Math.round(v/n*100));
+}
+function driftPct(d){
+  if(d<=0) return 8;
+  if(d<=100) return 16+d/100*28;
+  if(d<=500) return 44+(d-100)/400*28;
+  return Math.min(96,72+(d-500)/1000*24);
+}
+function driftStrip(rec,stopIdx){
+  const d=drift(rec,stopIdx);
+  if(d==null) return '<div class="drift"><p>Hvor ravet står</p>'+
+    '<small>Der er ikke revet noget løs på denne kyst i de sidste fire døgn, så der er '+
+    'ingen bestand at følge. Et pust over 10 m/s pålands skal til først.</small></div>';
+  const p=split(d);
+  const txt = d<5 ? 'På stranden og i vandkanten'
+            : d<60 ? 'Lige uden for vandkanten'
+            : 'Ca. '+Math.round(d/5)*5+' m ude i havet';
+  return '<div class="drift"><p>Hvor ravet står</p>'+
+    '<div class="dist">'+txt+'</div>'+
+    '<div class="dband"><div class="dseg s1">strand</div><div class="dseg s2">0–100 m</div>'+
+    '<div class="dseg s3">100–500 m</div><div class="dseg s4">500 m+</div>'+
+    '<div class="dmark" style="left:'+driftPct(d).toFixed(1)+'%"></div></div>'+
+    '<div class="dsplit">'+['strand','0–100 m','100–500 m','længere'].map((l,i)=>
+      '<div class="dcell"><b>'+p[i]+'%</b><i>'+l+'</i></div>').join('')+'</div>'+
+    '<small>Egen beregning ud fra vindhistorik og kystens retning — ikke Ravudsigtens tal. '+
+    'Stranden plukkes først; det der står længere ude bliver liggende i ålegræsset.</small></div>';
+}
+
+/* ============ kort ============
+   Tegnet i appen selv. Ingen flisetjeneste — de kræver enten nøgle eller
+   afviser kald fra en lokal fil, og så står man med et tomt kort.          */
+const colFor=s=> s>=7?'#4fae7c' : s>=4?'#f0a848' : s>=2?'#c4b48a' : '#d9584a';
+const MAPW=1000, MAPH=725, LON0=8.45, LAT1=57.80, KX=434.8, KY=804.8;
+const px=lon=>(lon-LON0)*KX, py=lat=>(LAT1-lat)*KY;
+
+/* Kystlinjen: stederne selv plus nogle få formpunkter imellem. */
+const COAST=[[8.46,57.09],[8.617,57.121],[8.750,57.115],[8.90,57.13],[9.016,57.147],
+ [9.070,57.157],[9.172,57.158],[9.26,57.18],[9.355,57.213],[9.46,57.235],
+ [9.579,57.253],[9.650,57.285],[9.713,57.368],[9.760,57.420],[9.800,57.473],
+ [9.860,57.515],[9.900,57.540],[9.958,57.588],[10.010,57.600],[10.145,57.605],
+ [10.270,57.655],[10.45,57.72],[10.620,57.740],[10.595,57.715],[10.50,57.66],
+ [10.420,57.598],[10.470,57.525],[10.550,57.430],[10.530,57.335],[10.500,57.235],
+ [10.475,57.195],[10.420,57.148],[10.350,57.08],[10.320,57.028],[10.315,56.995],
+ [10.26,56.96]];
+const FJORD=[[10.26,56.96],[10.15,56.985],[10.00,57.01],[9.90,57.05],[9.80,57.06],
+ [9.60,57.02],[9.40,56.975],[9.255,56.965],[9.05,56.93],[8.85,56.94],
+ [8.695,56.955],[8.50,56.99]];
+
+function smooth(pts){                       // blød kurve gennem punkterne
+  const p=pts.map(([lo,la])=>[px(lo),py(la)]);
+  let d='M'+p[0][0].toFixed(1)+' '+p[0][1].toFixed(1);
+  for(let i=0;i<p.length-1;i++){
+    const a=p[i], b=p[i+1];
+    const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+    d+=' Q'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' '+mx.toFixed(1)+' '+my.toFixed(1);
+  }
+  const l=p[p.length-1];
+  d+=' L'+l[0].toFixed(1)+' '+l[1].toFixed(1);
+  return d;
+}
+
+function drawMap(res){
+  // landmassen: kysten lukket mod syd og øst, så Vendsyssel bliver en flade
+  const land=smooth(COAST)+' L'+px(10.75)+' '+py(56.90)+' L'+px(8.46)+' '+py(56.90)+' Z';
+  const pins=res.map(a=>{
+    const on=a.spot.id===sel, r=on?11:8;
+    return '<circle class="pin'+(on?' sel':'')+'" cx="'+px(a.spot.lon).toFixed(1)+
+      '" cy="'+py(a.spot.lat).toFixed(1)+'" r="'+r+'" fill="'+colFor(a.score)+
+      '" data-s="'+a.spot.id+'"><title>'+a.spot.n+' · '+a.score.toFixed(1)+'/10</title></circle>';
+  }).join('');
+  const top=res.find(a=>a.spot.id===sel);
+  const lab=top?'<text class="plabel" x="'+
+    Math.min(MAPW-10,Math.max(10,px(top.spot.lon))).toFixed(0)+'" y="'+
+    (py(top.spot.lat)-20).toFixed(0)+'" text-anchor="middle">'+top.spot.n+'</text>':'';
+
+  document.getElementById('map').innerHTML=
+    '<svg viewBox="0 0 '+MAPW+' '+MAPH+'" role="img" aria-label="Kort over Nordjyllands kyster">'+
+    '<path class="land" d="'+land+'"/>'+
+    '<path class="fjord" d="'+smooth(FJORD)+'"/>'+
+    '<path class="coast" d="'+smooth(COAST)+'"/>'+
+    pins+lab+'</svg>';
+  document.querySelectorAll('#map .pin').forEach(c=>
+    c.onclick=()=>{ sel=c.dataset.s; render(); });
+}
+
+/* ============ tegning ============ */
+function render(){
+  if(!DATA) return;
+  const f=DATA.fetched;
+  const nSt=measured?measured.length:0;
+  const cov=DATA.filter(d=>d.measuredHours>0).length;
+  document.getElementById('stamp').innerHTML='Hentet '+
+    ['søn','man','tir','ons','tor','fre','lør'][f.getDay()]+' '+f.toTimeString().slice(0,5)+
+    (nSt?'<br>'+nSt+' målestationer · '+cov+' af '+DATA.length+' kyster':'');
+
+  const all=NIGHTS.map(nn=>DATA.map(r=>assess(r,nn.key)).filter(Boolean));
+  document.getElementById('nights').innerHTML=NIGHTS.map((nn,i)=>{
+    const best=all[i].length?Math.max(...all[i].map(a=>a.score)):0;
+    const lbl=i===0?'I aften':['Søn','Man','Tir','Ons','Tor','Fre','Lør'][nn.date.getDay()]+' '+nn.date.getDate()+'.';
+    return '<button class="night" aria-pressed="'+(i===night)+'" data-n="'+i+'">'+
+      '<b>'+lbl+'</b><i>'+(best>0?best.toFixed(1):'–')+'/10</i></button>';
+  }).join('');
+  document.querySelectorAll('.night').forEach(b=>b.onclick=()=>{night=+b.dataset.n;render();});
+
+  const res=all[night].slice().sort((a,b)=>b.score-a.score);
+  if(!res.find(x=>x.spot.id===sel)) sel=res[0].spot.id;
+  drawMap(res);
+
+  const a=res.find(x=>x.spot.id===sel)||res[0];
+  sel=a.spot.id;
+  document.getElementById('detail').innerHTML=detailCard(a,NIGHTS[night]);
+  document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{water=b.dataset.w;render();});
+
+  document.getElementById('rank').innerHTML=res.map(x=>
+    '<button class="rrow" aria-pressed="'+(x.spot.id===sel)+'" data-s="'+x.spot.id+'">'+
+    '<i class="rdot" style="background:'+colFor(x.score)+'"></i>'+
+    '<span class="rname"><b>'+x.spot.n+'</b><i>'+x.spot.a+' · vender mod '+
+      card(x.spot.f)+' '+x.spot.f+'°'+(x.spot.v?' ✓':' ~')+'</i></span>'+
+    '<span class="rtid">'+x.from+'<i>'+(x.dark?'mørkt':'lyst')+'</i></span>'+
+    '<span class="rsc" style="color:'+colFor(x.score)+'">'+x.score.toFixed(1)+'</span></button>').join('');
+  document.querySelectorAll('.rrow').forEach(b=>b.onclick=()=>{sel=b.dataset.s;render();});
+
+  document.getElementById('note').innerHTML=
+    '<b>Målt vind:</b> DMI Frie Data, otte stationer, ti minutters opløsning, fire døgn '+
+    'bagud. Hver kyst får et afstandsvægtet gennemsnit af de nærmeste tre inden for 90 km: '+
+    'de åbne kyster kun fra fyrene Hanstholm, Hirtshals og Skagen, som står ved havet, '+
+    'fjordkysterne kun fra Silstrup, Rønbjerg, Flyvestation Aalborg, Tylstrup og Stenhøj, '+
+    'der ligger inde i landet og dermed er lige så afskærmede som fjorden selv. '+
+    'De målte timer overskriver prognosen bagud, så fase 1 vurderes på hvad der faktisk skete. '+
+    'Seks af DMI’s nordjyske stationer svarer tomt og er udeladt. '+
+    'Vind, vindstød og solnedgang: Open-Meteo, fire døgns historik og seks frem. '+
+    'Kystretninger mærket ✓ er aflæst direkte på Ravudsigtens kort og regnes som rigtige. '+
+    'De mærket ~ er sat efter kystlinjen og er mit skøn — de mangler endnu: Hanstholm, Vigsø, '+
+    'Bulbjerg, Thorup, Tranum, Saltum, Grenen, Skagen Sønderstrand, Ålbæk, Storvorde, '+
+    'Løgstør og Thisted. '+
+    'Vurderingen følger din skala: over 10 m/s river løs, 15–16 er meget godt, '+
+    'og vinduet åbner når vinden falder under 10 igen. '+
+    'Intet fast jagtvindue — appen gennemløber alle døgnets timer og viser det bedste. '+
+    'Mørke straffer ikke scoren; det står kun på kortet, så du ved om ravlampen virker. '+
+    'Vandstand: DMI’s tidevandstabel fra tolv stationer, hvert tiende minut, og målt stand '+
+    'i cm over DVR90 fra Hanstholm, Hirtshals og Frederikshavn, plus DMI\u2019s registrerede stand '+
+    'fra Thisted og Haverslev i Limfjorden. Fremad regnes tidevand plus vindstuvning plus det målte overskud nu, som '+
+    'klinger af over et døgn. Prøvet af mod Hirtshals 12. oktober: 2,3 cm gennemsnitlig fejl over '+
+    'tolv timer. Skagen, Hals, Egense og Storvorde har kun tabellen; der er kurvens form pålidelig, '+
+    'niveauet mindre. DMI har ingen offentlig måler ved Hals Havn. Vil du selv sætte vandstanden, så vælg i stedet for Automatisk.';
+}
+
+/* Kort begrundelse for hvorfor netop dette tidsrum vandt døgnets gennemgang. */
+function bestWhy(d){
+  const b=[];
+  if(d.compWind<0) b.push('vinden er gået fralands, så søen flader ud');
+  else if(d.compWind<4) b.push('vinden står næsten stille på kysten');
+  else b.push('roligste timer på døgnet');
+  if(d.wf&&d.wf.auto&&d.wf.delta<=-2) b.push('vandet falder');
+  else if(d.wf&&d.wf.auto&&d.wf.delta>=2) b.push('vandet stiger, men mindst her');
+  if(d.dark) b.push('mørkt nok til ravlampen');
+  return b.join(', ').replace(/^./,c=>c.toUpperCase())+'.';
+}
+
+/* Det næstbedste vindue i den modsatte lysforhold — så der altid står
+   både et mørkt og et lyst bud, når døgnet rummer begge.              */
+function altBlock(d){
+  if(d.alt){
+    const lysord = d.alt.dark ? 'I mørke' : 'I dagslys';
+    const hj = d.alt.dark ? 'ravlampen virker' : 'du leder med øjnene';
+    return '<div class="alt"><b>'+lysord+': '+d.alt.from+'–'+d.alt.to+'</b>'+
+      '<span>'+d.alt.score.toFixed(1)+' af 10 · '+hj+'</span></div>';
+  }
+  if(d.noLight) return '<div class="alt"><span>Der er ikke mere dagslys tilbage i døgnet.</span></div>';
+  if(d.noDark)  return '<div class="alt"><span>Det når ikke at blive mørkt inden døgnet er omme.</span></div>';
+  return '';
+}
+
+function detailCard(d,nn){
+  const long=nn.date.toLocaleDateString('da-DK',{weekday:'long',day:'numeric',month:'long'});
+  let cls,word,lamp='';
+  const lampTxt = d.dark ? 'OPLAD RAVLAMPEN' : 'LYST VINDUE — LED MED ØJNENE';
+  if(d.score>=8.5){ cls='v-go'; word='MEGET GOD CHANCE'; lamp='<div class="lamp">'+lampTxt+'</div>'; }
+  else if(d.score>=7){ cls='v-go'; word='TAG AF STED'; lamp='<div class="lamp">'+lampTxt+'</div>'; }
+  else if(d.score>=4){ cls='v-mid'; word='MULIGT, MEN MIDDELMÅDIGT'; }
+  else { cls='v-wait'; word='VENT'; }
+
+  let why;
+  if(d.peak<5){
+    why='Denne kyst har ikke fået pålandsvind af betydning i de sidste 48 timer — '+
+        'kun '+d.peak.toFixed(1)+' m/s effektivt på toppen. Der er ikke flyttet materiale. '+
+        'Den skal have vind fra omkring '+card(d.spot.f)+' ('+d.spot.f+'°) for at komme i spil.';
+  } else {
+    const t=d.hoursSince;
+    const tw = t<12 ? 'kun '+t+' timer siden toppen — vinden har ikke haft tid til at aftage'
+      : t<=36 ? t+' timer siden toppen, midt i eftervirkningen'
+      : t<=48 ? t+' timer siden toppen, lidt sent'
+      : t+' timer siden toppen — materialet er gammelt';
+    why = d.peak.toFixed(1)+' m/s effektiv pålandsvind på toppen, '+d.sustained+
+      ' timer over 10, '+tw+'. I vinduet '+
+      (d.compWind<0 ? 'blæser det fralands ('+card(d.dir)+' '+d.ws.toFixed(0)+' m/s), så søen flader ud'
+                    : 'står vinden stadig ind ('+card(d.dir)+' '+d.ws.toFixed(0)+' m/s)')+
+      '. Regnet med '+d.wf.txt+'.';
+  }
+
+  let danger='';
+  if(d.compWind>=9){
+    danger='<div class="danger"><b>Gå ikke i vandet.</b> '+d.compWind.toFixed(0)+
+      ' m/s pålandsvind i vinduet giver reel sø. Arbejd opskylslinjen fra stranden i stedet.</div>';
+  }
+  const dark=d.darkFrom?d.darkFrom.toTimeString().slice(0,5):null;
+  const rec=DATA.find(r=>r.spot.id===d.spot.id);
+  const lys = d.dark
+    ? 'mørkt — ravlampen virker'
+    : 'lyst — led med øjnene'+(dark?', mørkt fra '+dark:'');
+
+  return '<div class="card '+cls+'">'+
+    '<div class="chead"><h2 class="cword" style="margin:0">'+word+'</h2>'+
+      '<div class="cscore"><b>'+d.score.toFixed(1)+'</b><i>af 10</i></div></div>'+
+    '<div class="cwhere">'+d.spot.n+'</div>'+
+    '<div class="cwhen">'+d.spot.a+' · '+long+' · '+lys+'</div>'+
+    '<div class="best"><b>'+d.from+'–'+d.to+'</b>'+
+      '<span>Størst chance i dette tidsrum — '+(d.dark?'mørkt':'lyst')+'.<br>'+
+      bestWhy(d)+'</span></div>'+altBlock(d)+
+    '<p class="cwhy">'+why+'</p>'+lamp+danger+
+    '<div class="grid">'+
+      '<div><span>Pålands, top</span><em>'+d.peak.toFixed(1)+' m/s</em></div>'+
+      '<div><span>Timer over 10</span><em>'+d.sustained+' t</em></div>'+
+      '<div><span>Siden toppen</span><em>'+(d.hoursSince==null?'–':d.hoursSince+' t')+'</em></div>'+
+      '<div><span>Vind i vinduet</span><em>'+card(d.dir)+' '+d.ws.toFixed(0)+' m/s</em></div>'+
+      '<div><span>Vindstød</span><em>'+d.gu.toFixed(0)+' m/s</em></div>'+
+      '<div><span>Nedbør i vinduet</span><em>'+d.rain.toFixed(1)+' mm</em></div>'+
+    '</div></div>'+
+    driftStrip(rec,d.stopIdx)+
+    waterPanel(d);
+}
+
+/* ============ vandstandspanel ============ */
+/* Lille kurve: målt (fuld streg) og skønnet frem gennem vinduet (stiplet).
+   Vinduet er markeret med et svagt bånd, nu med en lodret streg.        */
+function spark(meas, fut, win, nowAt, futLabel){
+  const all=[...(meas||[]),...(fut||[])];
+  if(all.length<3) return '';
+  const W=260,H=46;
+  let lo=Math.min(...all.map(p=>p.v)), hi=Math.max(...all.map(p=>p.v));
+  if(hi-lo<12){ const m=(hi+lo)/2; lo=m-6; hi=m+6; }
+  const t0=Math.min(...all.map(p=>+p.t)), t1=Math.max(...all.map(p=>+p.t));
+  const span=Math.max(1,t1-t0);
+  const X=t=>((+t-t0)/span)*(W-2)+1, Y=v=>H-3-((v-lo)/(hi-lo))*(H-6);
+  const path=ps=>ps.map((p,i)=>(i?'L':'M')+X(p.t).toFixed(1)+' '+Y(p.v).toFixed(1)).join(' ');
+  const ns='vector-effect="non-scaling-stroke"';
+  let g='';
+  if(win){ const x0=X(win[0]), x1=X(win[1]);
+    g+='<rect x="'+x0.toFixed(1)+'" y="0" width="'+Math.max(1,x1-x0).toFixed(1)+'" height="'+H+
+       '" fill="var(--amber)" opacity=".13"/>'; }
+  if(lo<0&&hi>0){ const zy=Y(0).toFixed(1);
+    g+='<line x1="1" x2="'+(W-1)+'" y1="'+zy+'" y2="'+zy+'" stroke="var(--edge)" stroke-dasharray="3 3" '+ns+'/>'; }
+  if(meas&&meas.length>1) g+='<path d="'+path(meas)+'" fill="none" stroke="var(--amber)" stroke-width="1.8" '+
+    'stroke-linejoin="round" stroke-linecap="round" '+ns+'/>';
+  if(fut&&fut.length>1) g+='<path d="'+path(fut)+'" fill="none" stroke="var(--sand)" stroke-width="1.5" '+
+    'stroke-dasharray="4 3" stroke-linecap="round" opacity=".75" '+ns+'/>';
+  const nowT = nowAt || (meas&&meas.length ? meas[meas.length-1].t : (fut&&fut.length?fut[0].t:null));
+  if(nowT){ const nx=X(nowT).toFixed(1);
+    g+='<line x1="'+nx+'" x2="'+nx+'" y1="2" y2="'+(H-2)+'" stroke="var(--amber)" stroke-width="1.6" '+ns+'/>'; }
+  const lab=t=>hhmm(new Date(t).toISOString());
+  return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" width="100%" height="'+H+
+    '" role="img" aria-label="Vandstand: målt og skønnet">'+g+'</svg>'+
+    '<div class="sparkax"><span>'+lab(t0)+'</span><span>'+Math.round(lo)+' til '+Math.round(hi)+' cm</span>'+
+    '<span>'+lab(t1)+'</span></div>'+
+    '<div class="sparkkey">'+(meas&&meas.length>1?'<span><i class="k1"></i>målt</span>':'')+
+    '<span><i class="k2"></i>'+(futLabel||(meas&&meas.length>1?'skønnet':'tidevand + stuvning'))+'</span>'+
+    (win?'<span><i class="k3"></i>vinduet</span>':'')+'</div>';
+}
+
+function waterPanel(d){
+  const rec=DATA.find(r=>r.spot.id===d.spot.id);
+  const w=waterSrc(d.spot);
+  const P = WL&&w.tide ? WL.pred[w.tide.t.id] : null;
+  const O = WL&&w.obs  ? WL.obs[w.obs.t.id]   : null;
+  const sgn=v=>(v>0?'+':'')+Math.round(v);
+  let head, body, sp='';
+
+  if(!P){
+    head='Vandstand sætter du selv';
+    body = WL ? 'Kunne ikke nå tidevandstabellen for '+(w.tide?w.tide.t.n:'denne kyst')+' denne gang.'
+              : 'Kunne ikke nå DMI’s vandstandsdata denne gang.';
+    body+=' Sæt den selv nedenfor, eller hent nye data.';
+  } else {
+    /* skønnet kurve fra nu til en time efter vinduet */
+    const T=rec.wx.hourly.time, ni=nowIdx(T);
+    /* med måling: målt bagud, skønnet fremad. Uden: tabellen 12 timer
+       bagud og frem, så tidevandets form kan ses.                     */
+    const near = O && w.obs.d<=15;      /* målingen gælder for kysten selv */
+    const fut=[], from0 = near ? ni : Math.max(0,ni-12);
+    if(ni>=0) for(let i=from0;i<=Math.min(T.length-1,d.stopIdx+1);i++){
+      const L=levelAt(rec,i); if(L) fut.push({t:new Date(T[i]+':00'), v:L.v}); }
+    const win=[new Date(T[d.startIdx]+':00'), new Date(new Date(T[d.stopIdx]+':00').getTime()+3600e3)];
+    const wf=d.wf;
+
+    if(O){
+      const trend = O.slope<=-1 ? 'falder '+Math.abs(O.slope).toFixed(1)+' cm/t'
+                  : O.slope>=1  ? 'stiger '+O.slope.toFixed(1)+' cm/t' : 'står nogenlunde stille';
+      if(w.obs.d<=15){
+        head='Vandstand '+sgn(O.now)+' cm · '+trend;
+        body='Målt ved '+w.obs.t.n+' kl. '+hhmm(O.at.toISOString())+
+          (w.obs.t.obs==='sea_reg' ? ', i cm (DMI\u2019s registrerede stand).' : ', i cm over DVR90.');
+      }else{
+        /* måleren står langt væk: overskriften er skønnet for kysten selv */
+        const L0=levelAt(rec,ni), L1=levelAt(rec,Math.min(T.length-1,ni+1));
+        const dl = L0&&L1 ? L1.v-L0.v : 0;
+        head='Vandstand ca. '+(L0?sgn(L0.v):'?')+' cm · '+
+          (dl<=-1?'faldende':dl>=1?'stigende':'vender');
+        body='Skønnet for '+d.spot.n+' ud fra tidevandet ved '+w.tide.t.n+
+          ' og målingen ved '+w.obs.t.n+' ('+sgn(O.now)+' cm kl. '+hhmm(O.at.toISOString())+
+          ', '+Math.round(w.obs.d)+' km væk)'+
+          (w.obs.t.obs==='sea_reg' ? ', i cm.' : ', i cm over DVR90.');
+      }
+    }else{
+      const tn=tideAt(P,new Date()), t1=tideAt(P,new Date(Date.now()+3600e3));
+      const tr = tn!=null&&t1!=null ? (t1-tn<=-1?'faldende':t1-tn>=1?'stigende':'vender') : '';
+      head='Tidevand ved '+w.tide.t.n+(tr?' · '+tr:'');
+      body='Ingen måling her — kun DMI’s tidevandstabel for '+w.tide.t.n+
+        (d.spot.ff<0.5?'. De eneste fjordmålere, Thisted og Haverslev, ligger for langt væk til at '+
+          'sige noget om vandet her. I fjorden er det vinden, ikke tidevandet, der flytter mest '+
+          '\u2014 så niveauet kan ligge et stykke fra kurven.'
+         :'. Nærmeste måler er for langt væk til at hænge kurven op på.');
+    }
+    if(wf&&wf.auto){
+      body+=' I vinduet '+d.from+'–'+d.to+' '+
+        (wf.anchored?'skønner jeg '+sgn(wf.from)+' cm ':'går kurven fra '+sgn(wf.from)+' cm ')+
+        (wf.delta<=-2?'ned til '+sgn(wf.to)+' cm — den rigtige vej.'
+         :wf.delta<2?'til '+sgn(wf.to)+' cm, altså nogenlunde fladt.'
+         :'op til '+sgn(wf.to)+' cm — den forkerte vej.');
+      if(wf.anchored && !wf.reg){
+        if(wf.mean<=0) body+=' Under DVR90 ligger opskylslinjen længere ude end normalt.';
+        else if(wf.mean>=35) body+=' Så højt vand dækker opskylslinjen — hold dig til stranden.';
+      }
+    }
+    body += O ? ' Fremad: tidevandstabellen plus min vindstuvning, plus det målte overskud nu, som klinger af over et døgn.'
+              : ' Kurven er tidevandstabellen plus min vindstuvning.';
+    sp=spark(near?O.pts:null, fut, win, ni>=0?new Date(T[ni]+':00'):null,
+             near?'skønnet':(O?'skønnet for '+d.spot.n:'tidevand + stuvning'));
+  }
+
+  return '<div class="water"><p>'+head+'</p>'+sp+
+    '<small>'+body+' Hele kurven på '+
+    '<a href="https://www.dmi.dk/vandstand" target="_blank" rel="noopener">DMI vandstand</a>.'+
+    '</small><div class="seg">'+
+    Object.keys(WATER).map(k=>'<button data-w="'+k+'" aria-pressed="'+(k===water)+'">'+
+      WATER[k].label+'</button>').join('')+'</div></div>';
+}
+
+/* ============ fangstlog ============
+   Efter hver tur: sted, tidspunkt og hvor meget — også når det blev
+   til ingenting. Gemmes i siden egen database, så Claude kan læse det
+   og stille modellen efter dine faktiske fund. Forholdene på turen
+   kan genskabes bagefter fra DMI's målinger, så her skal kun det
+   du ved, og ikke noget appen selv kan regne ud.                     */
+const RES=[
+  {t:'Intet',          c:'#d9584a'},
+  {t:'1–2 stykker',    c:'#c4b48a'},
+  {t:'En håndfuld',    c:'#f0a848'},
+  {t:'Rigtig god tur', c:'#4fae7c'}
+];
+let LOGDB=null, LOGUSER=null, LOG=[], logState='loading', logOpen=false,
+    logRes=null, logBusy=false, logErr='', logRO=false, delPending=null;
+
+const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function initLog(){
+  try{
+    if(!window.claude || typeof window.claude.use!=='function'){ logState='off'; renderLog(); return; }
+    const [db,user]=await Promise.all([claude.use('db'), claude.use('user')]);
+    if(!db){ logState='off'; renderLog(); return; }
+    LOGDB=db; LOGUSER=user;
+    if(user && typeof user.can==='function'){
+      try{ const w=await user.can('data.write'); if(w===false) logRO=true; }catch(e){}
+    }
+    db.collection('fund').orderBy('when','desc').limit(100).onSnapshot(
+      snap=>{ LOG=snap.docs.map(d=>Object.assign({id:d.id}, d.data())); logState='on'; renderLog(); },
+      e=>{ logState='err'; logErr='Loggen kunne ikke læses ('+e.code+').'; renderLog(); }
+    );
+  }catch(e){ logState='off'; renderLog(); }
+}
+
+function condFor(spotId, whenStr){
+  /* Gem modellens vurdering, hvis turen ligger i et døgn appen har data for.
+     Det er en bonus — forholdene kan altid genskabes fra DMI bagefter.   */
+  try{
+    if(!DATA) return null;
+    const rec=DATA.find(r=>r.spot.id===spotId); if(!rec) return null;
+    const a=assess(rec, whenStr.slice(0,10)); if(!a) return null;
+    return {score:a.score, peak:+a.peak.toFixed(1), sustained:a.sustained,
+            hoursSince:a.hoursSince, window:a.from+'-'+a.to, dark:a.dark,
+            water:a.wf&&a.wf.auto?Math.round(a.wf.mean):null};
+  }catch(e){ return null; }
+}
+
+async function saveLog(){
+  if(logBusy||logRes==null) return;
+  const f=document.getElementById('logf');
+  const spot=f.querySelector('[name=spot]').value;
+  const date=f.querySelector('[name=date]').value;
+  const time=f.querySelector('[name=time]').value||'00:00';
+  const note=f.querySelector('[name=note]').value.trim().slice(0,600);
+  if(!spot||!date){ logErr='Vælg sted og dato.'; renderLog(); return; }
+  const sp=SPOTS.find(x=>x.id===spot);
+  const when=date+'T'+time;
+  const id='t'+when.replace(/[-:T]/g,'')+'-'+spot+'-'+Math.random().toString(36).slice(2,6);
+  const body={spot, spotName:sp?sp.n:spot, when, res:logRes, note,
+              created:new Date().toISOString()};
+  const c=condFor(spot,when); if(c) body.cond=c;
+  logBusy=true; logErr=''; renderLog();
+  try{
+    await LOGDB.collection('fund').doc(id).set(body);
+    logOpen=false; logRes=null;
+  }catch(e){
+    if(e&&e.code==='invalid_argument'){ logRO=true; logErr='Du har ikke skriveadgang til denne log.'; }
+    else if(e&&e.code==='quota_exceeded') logErr='Loggen er fuld. Slet nogle gamle ture.';
+    else logErr='Kunne ikke gemme ('+(e&&e.code||'fejl')+'). Prøv igen.';
+  }
+  logBusy=false; renderLog();
+}
+
+async function delLog(id){
+  if(delPending!==id){ delPending=id; renderLog(); return; }
+  delPending=null;
+  try{ await LOGDB.collection('fund').doc(id).delete(); }
+  catch(e){ logErr='Kunne ikke slette ('+(e&&e.code||'fejl')+').'; renderLog(); }
+}
+
+function renderLog(){
+  const el=document.getElementById('log'); if(!el) return;
+  if(logState==='loading'){ el.innerHTML='<p class="lognote">Indlæser…</p>'; return; }
+  if(logState==='off'){
+    /* Uden for claude.ai findes databasen ikke. Loggen bor i Claude-udgaven,
+       så her er en genvej dertil i stedet for en formular der ikke kan gemme. */
+    el.innerHTML='<p class="lognote">Loggen gemmes i Claude-udgaven af appen, hvor jeg kan læse den.</p>'+
+      '<a class="logbtn" style="display:block;text-align:center;text-decoration:none" '+
+      'href="https://claude.ai/artifact/V1BSstbMCf5RYCpBpRwvYG" target="_blank" rel="noopener">'+
+      '+ Registrér en tur i Claude</a>'; return;
+  }
+  let h='';
+  if(logState==='err') h+='<p class="logerr">'+esc(logErr)+'</p>';
+
+  if(!logRO){
+    if(!logOpen){
+      h+='<button class="logbtn" id="lognew">+ Registrér en tur</button>';
+    }else{
+      const now=new Date();
+      const d=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+      const t=pad(now.getHours())+':'+pad(now.getMinutes());
+      h+='<div class="logform" id="logf">'+
+        '<label>Sted</label><select name="spot">'+
+          SPOTS.map(x=>'<option value="'+x.id+'"'+(x.id===sel?' selected':'')+'>'+esc(x.n)+'</option>').join('')+
+        '</select>'+
+        '<div class="logrow2"><div><label>Dato</label><input type="date" name="date" value="'+d+'"></div>'+
+        '<div><label>Klokken</label><input type="time" name="time" value="'+t+'"></div></div>'+
+        '<label>Hvor meget fandt du?</label><div class="res">'+
+          RES.map((r,i)=>'<button type="button" data-r="'+i+'" aria-pressed="'+(logRes===i)+'">'+r.t+'</button>').join('')+
+        '</div>'+
+        '<label>Note (valgfri)</label><textarea name="note" maxlength="600" '+
+          'placeholder="Største stykke, hvor på stranden, vand eller ålegræs…"></textarea>'+
+        '<div class="logact"><button type="button" id="logcancel">Fortryd</button>'+
+          '<button type="button" class="save" id="logsave"'+((logRes==null||logBusy)?' disabled':'')+'>'+
+          (logBusy?'Gemmer…':'Gem tur')+'</button></div>'+
+        (logErr&&logState!=='err'?'<p class="logerr">'+esc(logErr)+'</p>':'')+
+      '</div>';
+    }
+  }
+
+  if(LOG.length){
+    const n=LOG.length, hits=LOG.filter(x=>x.res>0).length;
+    h+='<p class="lognote" style="margin:12px 0 0">'+n+' tur'+(n===1?'':'e')+' · fund på '+hits+'</p>';
+    h+='<div class="entries">'+LOG.map(x=>{
+      const r=RES[x.res]||RES[0];
+      const dt=x.when?new Date(x.when):null;
+      const ds=dt&&!isNaN(dt)?dt.toLocaleDateString('da-DK',{weekday:'short',day:'numeric',month:'short'})+
+        ' kl. '+x.when.slice(11,16):esc(x.when);
+      const cc=x.cond?' · model '+Number(x.cond.score).toFixed(1):'';
+      return '<div class="entry"><span class="ebadge" style="background:'+r.c+'">'+x.res+'</span>'+
+        '<span class="etxt"><b>'+esc(x.spotName||x.spot)+' — '+r.t+'</b>'+
+        '<i>'+ds+cc+'</i>'+(x.note?'<p>'+esc(x.note)+'</p>':'')+'</span>'+
+        (logRO?'':'<button class="edel" data-del="'+esc(x.id)+'" aria-label="Slet">'+
+          (delPending===x.id?'<span style="font-size:12px;color:var(--wait)">Slet?</span>':'×')+'</button>')+
+        '</div>';
+    }).join('')+'</div>';
+  }else if(logState==='on'){
+    h+='<p class="lognote" style="margin-top:10px">Ingen ture endnu. Registrér også dem hvor du intet fandt — '+
+      'de viser hvor modellen lover for meget.</p>';
+  }
+  el.innerHTML=h;
+
+  const nb=document.getElementById('lognew');
+  if(nb) nb.onclick=()=>{logOpen=true;logRes=null;logErr='';renderLog();};
+  const cb=document.getElementById('logcancel');
+  if(cb) cb.onclick=()=>{logOpen=false;logRes=null;logErr='';renderLog();};
+  const sb=document.getElementById('logsave'); if(sb) sb.onclick=saveLog;
+  el.querySelectorAll('.res button').forEach(b=>b.onclick=()=>{
+    /* bevar det der er skrevet, når et resultat vælges */
+    const f=document.getElementById('logf');
+    const keep={spot:f.querySelector('[name=spot]').value, date:f.querySelector('[name=date]').value,
+      time:f.querySelector('[name=time]').value, note:f.querySelector('[name=note]').value};
+    logRes=+b.dataset.r; renderLog();
+    const g=document.getElementById('logf');
+    g.querySelector('[name=spot]').value=keep.spot; g.querySelector('[name=date]').value=keep.date;
+    g.querySelector('[name=time]').value=keep.time; g.querySelector('[name=note]').value=keep.note;
+  });
+  el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delLog(b.dataset.del));
+}
+
+initLog();
+document.getElementById('btn').onclick=load;
+load();
+</script>
+</body>
+</html>
