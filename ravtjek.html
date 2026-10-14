@@ -51,7 +51,7 @@
   #map{margin-top:14px;border-radius:14px;border:1px solid var(--edge);
     background:#0a1a24;overflow:hidden}
   #map svg{display:block;width:100%;height:auto}
-  .land{fill:#17323d;stroke:none}
+  .land{fill:#17323d;stroke:#3b6678;stroke-width:1.6;stroke-linejoin:round}
   .coast{fill:none;stroke:#3b6678;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
   .fjord{fill:none;stroke:#2b4e5e;stroke-width:2.5;stroke-dasharray:7 6;stroke-linecap:round}
   .pin{stroke:#0a1a24;stroke-width:2;cursor:pointer}
@@ -206,6 +206,8 @@
     cursor:pointer;width:100%;text-align:left}
   .rrow[aria-pressed="true"]{border-color:var(--sand)}
   .rdot{width:11px;height:11px;border-radius:50%;flex:none}
+  .rmore{width:100%;background:transparent;border:1px dashed var(--edge);border-radius:11px;
+    padding:11px;color:var(--sand);font-size:13.5px;cursor:pointer;margin-top:2px}
   .rname{flex:1;min-width:0}
   .rname b{display:block;font-size:14.5px;font-weight:600}
   .rname i{font-style:normal;font-size:12px;color:var(--muted)}
@@ -266,19 +268,34 @@
    Hirtshals 314, Blokhus 308 og Slettestrand 336 er Ravudsigtens egne tal.
    fetchF = hvor meget frit stræk der er til at bygge sø.                   */
 const SPOTS=[
+ /* Vestkysten fra Thorsminde til Thyborøn (retning fra OSM-kystlinjen) */
+ {id:'thorsminde', n:'Thorsminde',      a:'Vestkysten',       lat:56.3793, lon:8.1173,  f:258, ff:1.00, v:1},
+ {id:'fjaltring',  n:'Fjaltring',       a:'Vestkysten',       lat:56.4811, lon:8.1229,  f:265, ff:1.00, v:1},
+ {id:'bovbjerg',   n:'Bovbjerg',        a:'Vestkysten',       lat:56.5126, lon:8.1151,  f:269, ff:1.00, v:1},
+ {id:'vejlby',     n:'Vejlby Klit',     a:'Harboøre Tange',   lat:56.5761, lon:8.1315,  f:283, ff:1.00, v:1},
+ {id:'harboore',   n:'Harboøre',        a:'Harboøre Tange',   lat:56.6199, lon:8.1508,  f:284, ff:1.00, v:1},
+ {id:'thyboron',   n:'Thyborøn',        a:'Harboøre Tange',   lat:56.6900, lon:8.1908,  f:295, ff:1.00, v:1},
  /* Thy: Nordsøkysten fra Agger op til Hanstholm */
  {id:'agger',      n:'Agger',           a:'Thy · Nordsøen',   lat:56.7825, lon:8.2223,  f:274, ff:1.00, v:1},
+ {id:'lyngbythy',  n:'Lyngby',          a:'Thy · Nordsøen',   lat:56.8612, lon:8.2759,  f:293, ff:1.00, v:1},
  {id:'stenbjerg',  n:'Stenbjerg',       a:'Thy · Nordsøen',   lat:56.9150, lon:8.3172,  f:295, ff:1.00, v:1},
  {id:'vorupor',    n:'Nørre Vorupør',   a:'Thy · Nordsøen',   lat:56.9585, lon:8.3651,  f:306, ff:1.00, v:1},
+ {id:'vangsa',     n:'Vangså',          a:'Thy · Nordsøen',   lat:56.9925, lon:8.4184,  f:301, ff:1.00, v:1},
  {id:'klitmoller', n:'Klitmøller',      a:'Thy · Nordsøen',   lat:57.0425, lon:8.4831,  f:317, ff:1.00, v:1},
+ {id:'hanstholmv', n:'Hanstholm Vest',  a:'Thy · Roshage',    lat:57.1078, lon:8.5787,  f:300, ff:1.00, v:1},
  {id:'hanstholm',  n:'Hanstholm',       a:'Thy · øst for havnen', lat:57.1160, lon:8.6650, f:20, ff:1.00, v:1},
  {id:'vigso',      n:'Vigsø',           a:'Thy · Jammerbugten', lat:57.1016, lon:8.7500, f:3,  ff:1.00, v:1},
- {id:'bulbjerg',   n:'Bulbjerg',        a:'Jammerbugten',     lat:57.1488, lon:8.9900,  f:347, ff:1.00, v:1},
+ {id:'lild',       n:'Lild Strand',     a:'Jammerbugten',     lat:57.1531, lon:8.9639,  f:340, ff:1.00, v:1},
+ {id:'bulbjerg',   n:'Bulbjerg',        a:'Jammerbugten',     lat:57.1571, lon:9.0174,  f:2,   ff:1.00, v:1},
  {id:'thorup',     n:'Thorup Strand',   a:'Jammerbugten',     lat:57.1452, lon:9.0850,  f:18,  ff:1.00, v:1},
+ {id:'klim',       n:'Klim Strand',     a:'Jammerbugten',     lat:57.1382, lon:9.1600,  f:3,   ff:1.00, v:1},
  {id:'slette',     n:'Slettestrand',    a:'Jammerbugten',     lat:57.1370, lon:9.1800,  f:0,   ff:1.00, v:1},
+ {id:'svinklov',   n:'Svinkløv',        a:'Jammerbugten',     lat:57.1534, lon:9.3167,  f:345, ff:1.00, v:1},
  {id:'tranum',     n:'Tranum Strand',   a:'Jammerbugten',     lat:57.1614, lon:9.3850,  f:337, ff:1.00, v:1},
+ {id:'rodhus',     n:'Rødhus',          a:'Jammerbugten',     lat:57.2139, lon:9.5171,  f:317, ff:1.00, v:1, k:0.55},
  {id:'blokhus',    n:'Blokhus',         a:'Jammerbugten',     lat:57.2530, lon:9.5790,  f:308, ff:1.00, v:1, k:0.55},
  {id:'saltum',     n:'Saltum Strand',   a:'Jammerbugten',     lat:57.2850, lon:9.6103,  f:300, ff:1.00, v:1, k:0.6},
+ {id:'gronhoj',    n:'Grønhøj Strand',  a:'Jammerbugten',     lat:57.3252, lon:9.6579,  f:299, ff:1.00, v:1, k:0.65},
  {id:'lokken',     n:'Løkken',          a:'Jammerbugten',     lat:57.3696, lon:9.7075,  f:299, ff:1.00, v:1, k:0.7},
  {id:'nrlyngby',   n:'Nørre Lyngby',    a:'Jammerbugten',     lat:57.4214, lon:9.7537,  f:292, ff:1.00, v:1, k:0.8},
  {id:'lonstrup',   n:'Lønstrup',        a:'Jammerbugten',     lat:57.4749, lon:9.7949,  f:305, ff:1.00, v:1, k:0.9},
@@ -286,13 +303,17 @@ const SPOTS=[
  {id:'tornby',     n:'Tornby Strand',   a:'Hirtshals',        lat:57.5412, lon:9.8960,  f:299, ff:1.00, v:1},
  {id:'hirtshals',  n:'Hirtshals',       a:'Skagerrak',        lat:57.5914, lon:9.9517,  f:315, ff:1.00, v:1},
  {id:'kjul',       n:'Kjul Strand',     a:'Skagerrak',        lat:57.5885, lon:10.0126, f:353, ff:1.00, v:1},
+ {id:'uggerby',    n:'Uggerby Strand',  a:'Skagerrak',        lat:57.5898, lon:10.1000, f:1,   ff:1.00, v:1},
  {id:'tversted',   n:'Tversted',        a:'Skagerrak',        lat:57.5908, lon:10.1531, f:343, ff:1.00, v:1},
  {id:'skiveren',   n:'Skiveren',        a:'Skagerrak',        lat:57.6278, lon:10.3006, f:329, ff:1.00, v:1},
+ {id:'kandest',    n:'Kandestederne',   a:'Skagerrak',        lat:57.6892, lon:10.4357, f:319, ff:1.00, v:1},
+ {id:'glskagen',   n:'Gl. Skagen',      a:'Skagen',           lat:57.7337, lon:10.5322, f:325, ff:1.00, v:1},
  {id:'grenen',     n:'Grenen',          a:'Skagen',           lat:57.7485, lon:10.6000, f:347, ff:1.00, v:1},
  /* Kattegat fra Skagen ned til Udbyhøj */
  {id:'sonderstr',  n:'Skagen Sønderstrand',a:'Kattegat',      lat:57.7000, lon:10.5450, f:128, ff:0.85, v:1},
  {id:'aalbaek',    n:'Ålbæk',           a:'Kattegat',         lat:57.5985, lon:10.4276, f:105, ff:0.85, v:1},
  {id:'jerup',      n:'Jerup',           a:'Kattegat',         lat:57.5250, lon:10.4604, f:61,  ff:0.85, v:1},
+ {id:'strandby',   n:'Strandby',        a:'Kattegat',         lat:57.4859, lon:10.5067, f:58,  ff:0.85, v:1},
  {id:'frhavn',     n:'Frederikshavn',   a:'Kattegat',         lat:57.4310, lon:10.5382, f:99,  ff:0.85, v:1},
  {id:'saeby',      n:'Sæby',            a:'Kattegat',         lat:57.3346, lon:10.5255, f:80,  ff:0.85, v:1},
  {id:'lyngsaa',    n:'Lyngså',          a:'Kattegat',         lat:57.2366, lon:10.5416, f:86,  ff:0.85, v:1},
@@ -304,14 +325,23 @@ const SPOTS=[
  {id:'osthurup',   n:'Øster Hurup',     a:'Kattegat',         lat:56.8050, lon:10.2755, f:81,  ff:0.85, v:1},
  {id:'als',        n:'Als',             a:'Kattegat',         lat:56.7575, lon:10.3000, f:71,  ff:0.85, v:1},
  {id:'udbyhoj',    n:'Udbyhøj Nord',    a:'Kattegat',         lat:56.6250, lon:10.3520, f:100, ff:0.85, v:1},
+ /* Djursland: nordkysten, som strømbåndet rammer godt (Bønnerup, Gjerrild) */
+ {id:'fjellerup',  n:'Fjellerup Strand', a:'Djursland',       lat:56.5168, lon:10.5769, f:348, ff:0.85, v:1},
+ {id:'bonnerup',   n:'Bønnerup Strand', a:'Djursland',        lat:56.5318, lon:10.7141, f:351, ff:0.85, v:1},
+ {id:'gjerrild',   n:'Gjerrild Strand', a:'Djursland',        lat:56.5327, lon:10.8157, f:21,  ff:0.85, v:1},
+ {id:'grenaa',     n:'Grenaa Strand',   a:'Djursland',        lat:56.3951, lon:10.9213, f:100, ff:0.85, v:1},
+ /* Læsø: nordkysten */
+ {id:'lsvestero',  n:'Vesterø Strand',  a:'Læsø',             lat:57.2967, lon:10.9208, f:319, ff:0.85, v:1},
+ {id:'lsnord',     n:'Læsø Nordstrand', a:'Læsø',             lat:57.3058, lon:11.0000, f:342, ff:0.85, v:1},
+ {id:'lsosterby',  n:'Østerby Strand',  a:'Læsø',             lat:57.3199, lon:11.1151, f:351, ff:0.85, v:1},
  /* Limfjorden */
  {id:'egense',     n:'Egense',          a:'Limfjorden',       lat:56.9810, lon:10.2793, f:354, ff:0.25, v:1},
  {id:'storvorde',  n:'Nord for Storvorde',a:'Limfjorden',     lat:57.0058, lon:10.1500, f:42,  ff:0.22, v:1},
- {id:'egholm',     n:'Egholm Vest',     a:'Limfjorden',       lat:57.0530, lon:9.8550,  f:266, ff:0.20, v:1},
+ {id:'egholm',     n:'Egholm Vest',     a:'Limfjorden',       lat:57.0558, lon:9.8346,  f:266, ff:0.20, v:1},
  {id:'logstor',    n:'Løgstør',         a:'Limfjorden',       lat:56.9665, lon:9.2523,  f:325, ff:0.25, v:1},
  {id:'thisted',    n:'Thisted',         a:'Limfjorden',       lat:56.9462, lon:8.6950,  f:173, ff:0.22, v:1},
  /* Mariager Fjord: smal og lang, raven skal langt ind, derfor lav ff */
- {id:'hadsund',    n:'Hadsund',         a:'Mariager Fjord',   lat:56.7078, lon:10.1150, f:134, ff:0.18, b:'mar', v:1},
+ {id:'hadsund',    n:'Hadsund',         a:'Mariager Fjord',   lat:56.7150, lon:10.1175, f:149, ff:0.18, b:'mar', v:1},
  {id:'mariager',   n:'Mariager',        a:'Mariager Fjord',   lat:56.6594, lon:9.9850,  f:330, ff:0.12, b:'mar', v:1},
  {id:'hobro',      n:'Hobro',           a:'Mariager Fjord',   lat:56.6463, lon:9.8550,  f:173, ff:0.10, b:'mar', v:1}
 ];
@@ -362,18 +392,18 @@ const WATER={
 };
 
 /* DMI Frie Data — målte observationer, ingen nøgle.
-   Kun disse ti stationer i området leverer faktisk data; de øvrige
+   Kun disse elleve stationer i området leverer faktisk data; de øvrige
    i DMI's liste (06029 Grønlandshavnen, 06042/06043 Frederikshavn,
    06034 Sindal, 06044 Hals, 20012 Kandestederne, 06052 Thyborøn,
-   06051 Vestervig, 06049 Hald Vest) svarer tomt. Agger og resten af Thy
+   06051 Vestervig, 06049 Hald Vest, 06038 Vesterø på Læsø) svarer tomt. Agger og resten af Thy
    får derfor vinden fra Hanstholm Fyr, Kattegat syd for Hals fra Anholt.
    kind:'coast' står ved åbent vand og repræsenterer vinden over havet;
    kind:'land' ligger inde i landet og bruges kun til fjordkysterne,
    som reelt er lige så afskærmede.                                      */
 const DMI_URL='https://opendataapi.dmi.dk/v2/metObs/collections/observation/items';
 const STATIONS=[
-  {id:'06021', n:'Hanstholm Fyr',        lat:57.1125, lon:8.5991,  kind:'coast'},
-  {id:'06033', n:'Hirtshals Fyr',        lat:57.5845, lon:9.9421,  kind:'coast'},
+  {id:'06021', n:'Hanstholm Fyr',        lat:57.1248, lon:8.6023,  kind:'coast'},
+  {id:'06033', n:'Hirtshals Fyr',        lat:57.5955, lon:9.9580,  kind:'coast'},
   {id:'06041', n:'Skagen Fyr',           lat:57.7364, lon:10.6316, kind:'coast'},
   {id:'06032', n:'Stenh\u00f8j',             lat:57.3828, lon:10.3349, kind:'land'},
   {id:'06031', n:'Tylstrup',             lat:57.1852, lon:9.9527,  kind:'land'},
@@ -381,6 +411,7 @@ const STATIONS=[
   {id:'06019', n:'Silstrup',             lat:56.9300, lon:8.6412,  kind:'land'},
   {id:'06063', n:'R\u00f8nbjerg Huse Havn',  lat:56.8910, lon:9.1654,  kind:'land'},
   {id:'06079', n:'Anholt Havn',          lat:56.7169, lon:11.5098, kind:'coast'},
+  {id:'06058', n:'Hvide Sande',          lat:56.0072, lon:8.1413,  kind:'coast'},
   {id:'06065', n:'\u00c5rs Syd',              lat:56.7558, lon:9.5067,  kind:'land'}
 ];
 const MAXKM=90;   /* længere væk end dette regnes målingen ikke som dækkende */
@@ -392,10 +423,10 @@ const MAXKM=90;   /* længere væk end dette regnes målingen ikke som dækkende
    - observation/sea_reg: DMI's registrerede stand; sådan melder
      fjordmålerne. Nulpunktet er ikke dokumenteret, men tallene ligger
      tæt på DVR90 og følger tabellen, så de bruges mest for udviklingen.
-   Målinger findes ved Hanstholm, Hirtshals, Frederikshavn, Udbyhøj og
-   Hobro (sealev_dvr) og ved Thyborøn, Als Odde, Thisted og Haverslev
-   (sea_reg). Skagen, Hals, Aalborg, Løgstør, Hadsund og Saltfabrikken
-   har kun tabellen. oid = måleren har et andet stations-id end tabellen.
+   Målinger findes ved Hanstholm, Hirtshals, Frederikshavn, Udbyhøj, Grenå
+   og Hobro (sealev_dvr) og ved Thorsminde, Ferring, Thyborøn, Als Odde,
+   Thisted og Haverslev (sea_reg). Skagen, Hals, Aalborg, Løgstør, Hadsund,
+   Saltfabrikken og Vesterø på Læsø har kun tabellen. oid = måleren har et andet stations-id end tabellen.
    b = fjordbassin: 'lim' Limfjorden (standard), 'mar' Mariager Fjord.
    Fjordene deler ikke vand, så en fjordkyst bruger kun sit eget bassin. */
 const OCEAN_URL='https://opendataapi.dmi.dk/v2/oceanObs/collections/observation/items';
@@ -418,14 +449,19 @@ const TSTN=[
   {id:'22009', n:'Udbyhøj',          lat:56.6105, lon:10.3054, kind:'coast', obs:'sealev_dvr'},
   {id:'20567', n:'Hobro',            lat:56.6388, lon:9.8038,  kind:'fjord', b:'mar', obs:'sealev_dvr'},
   {id:'20575', n:'Saltfabrikken',    lat:56.6829, lon:10.0384, kind:'fjord', b:'mar'},
-  {id:'20577', n:'Hadsund',          lat:56.7168, lon:10.1255, kind:'fjord', b:'mar'}
+  {id:'20577', n:'Hadsund',          lat:56.7168, lon:10.1255, kind:'fjord', b:'mar'},
+  {id:'27014', n:'Vesterø (Læsø)',   lat:57.2961, lon:10.9240, kind:'coast'},
+  {id:'22121', n:'Grenå',            lat:56.4121, lon:10.9220, kind:'coast', obs:'sealev_dvr'},
+  {id:'24018', oid:'9004303', n:'Ferring', lat:56.5246, lon:8.1152, kind:'coast', obs:'sea_reg'},
+  {id:'24122', oid:'9005103', n:'Thorsminde', lat:56.3726, lon:8.1136, kind:'coast', obs:'sea_reg'}
 ];
 /* længere fra en måler end dette hænges kurven ikke op på en måling.
    Fjorden er strammere: vandstanden kan stå helt forskelligt i hver ende. */
 const OBS_MAXKM={coast:80, fjord:35};
 
 let DATA=null, NIGHTS=[], night=0, water='auto', loading=false,
-    measured=null, WL=null, sel='hirtshals', map=null, markers={};
+    measured=null, WL=null, sel='hirtshals', map=null, markers={}, rankAll=false;
+const RANK_TOP=15;
 
 /* ============ hentning ============ */
 const FURL='https://api.open-meteo.com/v1/forecast?latitude='+SPOTS.map(s=>s.lat).join(',')+
@@ -974,56 +1010,22 @@ function driftStrip(rec,a){
    Tegnet i appen selv. Ingen flisetjeneste — de kræver enten nøgle eller
    afviser kald fra en lokal fil, og så står man med et tomt kort.          */
 const colFor=s=> s>=7?'#4fae7c' : s>=4?'#f0a848' : s>=2?'#c4b48a' : '#d9584a';
-/* Udsnit: Agger/Thyborøn i sydvest, Skagen i nord, Udbyhøj i sydøst.
-   Lige store km på begge akser ved midterbredden 57,19°.               */
-const MAPW=1000, MAPH=847, LON0=8.12, LAT1=57.80, KX=375.9, KY=693.8;
+/* Udsnit: Thorsminde i sydvest, Skagen i nord, Læsø og Grenaa i øst.
+   Lige store km på begge akser ved midterbredden 57,07°.               */
+const MAPW=1000, MAPH=832, LON0=8.00, LAT1=57.80, KX=307.7, KY=565.9;
 const px=lon=>(lon-LON0)*KX, py=lat=>(LAT1-lat)*KY;
 
-/* Kystlinjen, med uret fra sydvest. Punkterne er de målte strandkanter
-   (EMODnet), kun enkelte formpunkter imellem er skønnet (mærket ~).      */
-const COAST=[[8.170,56.575],[8.190,56.640],[8.205,56.700],[8.2223,56.7825],[8.270,56.850],
- [8.3172,56.915],[8.3651,56.9585],[8.4831,57.0425],[8.560,57.110],[8.590,57.1247],
- [8.650,57.119],[8.680,57.113],[8.720,57.1025],[8.780,57.1007],[8.940,57.1425],
- [8.980,57.156],[9.040,57.155],[9.070,57.148],[9.100,57.1425],[9.130,57.139],
- [9.170,57.1368],[9.210,57.1386],[9.350,57.1535],[9.420,57.1693],[9.500,57.210],
- [9.576,57.253],[9.589,57.265],[9.632,57.305],[9.713,57.375],[9.760,57.4297],
- [9.800,57.4788],[9.860,57.5116],[9.900,57.5451],[9.958,57.5948],[10.010,57.5883],
- [10.145,57.5894],[10.270,57.6179],[10.400,57.672],[10.535,57.735],[10.580,57.746],
- [10.620,57.7508],[10.648,57.750],[10.620,57.7215],[10.590,57.715],[10.552,57.705],
- [10.538,57.695],[10.480,57.650],[10.434,57.612],[10.421,57.585],[10.4448,57.540],
- [10.476,57.510],[10.538,57.430],[10.5254,57.335],[10.5418,57.235],[10.4744,57.195],
- [10.4176,57.148],[10.380,57.090],[10.3544,57.028],[10.337,56.995],[10.325,56.975],
- [10.2627,56.885],[10.2755,56.805],[10.300,56.7575],[10.330,56.705],[10.340,56.690],
- [10.3485,56.655],[10.352,56.625],[10.330,56.612],[10.370,56.575]];
-/* Limfjorden fra Hals til Thyborøn, lagt gennem DMI's målere og de målte bredder. */
-const FJORD=[[10.335,56.993],[10.3084,56.9901],[10.280,56.988],[10.200,57.005],[10.150,57.012],
- [10.052,57.0486],[9.9576,57.0525],[9.860,57.055],[9.750,57.035],[9.640,56.995],
- [9.520,57.010],[9.4017,57.0284],[9.300,56.995],[9.2459,56.9678],[9.170,56.930],
- [9.050,56.925],[8.900,56.945],[8.6941,56.9538],[8.630,56.880],[8.520,56.780],
- [8.380,56.720],[8.215,56.705]];
-const MARIAGER=[[9.8038,56.6388],[9.855,56.643],[9.920,56.652],[9.985,56.661],[10.0384,56.6829],
- [10.115,56.712],[10.200,56.705],[10.270,56.692],[10.335,56.690]];
-const RANDERS=[[10.335,56.612],[10.300,56.606],[10.250,56.590],[10.200,56.570]];
-
-function smooth(pts){                       // blød kurve gennem punkterne
-  const p=pts.map(([lo,la])=>[px(lo),py(la)]);
-  let d='M'+p[0][0].toFixed(1)+' '+p[0][1].toFixed(1);
-  for(let i=0;i<p.length-1;i++){
-    const a=p[i], b=p[i+1];
-    const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
-    d+=' Q'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' '+mx.toFixed(1)+' '+my.toFixed(1);
-  }
-  const l=p[p.length-1];
-  d+=' L'+l[0].toFixed(1)+' '+l[1].toFixed(1);
-  return d;
-}
+/* Landet: OpenStreetMaps kystlinje (© OpenStreetMap-bidragydere, ODbL, via
+   geo-maps earth-coastlines-100m), beskåret til udsnittet, forenklet til
+   ca. 200 m og regnet om til kortets koordinater. Limfjorden og Mariager
+   Fjord er vand i kystlinjen og kommer derfor med af sig selv.          */
+const LAND='M59 824L58 827L53 828L54 825L59 824ZM195 705L194 712L196 716L196 722L190 727L194 722L191 716L190 708L188 707L188 705L197 690L203 689L205 690L207 689L204 691L195 705ZM185 654L184 652L184 651L181 649L182 644L185 645L189 643L194 646L197 644L196 650L194 653L196 656L194 663L197 667L188 659L184 657L185 654ZM167 624L167 625L164 623L163 622L167 620L168 625L167 625L167 623L165 624L167 624ZM368 611L366 606L368 609L369 609L369 608L369 609L368 611ZM332 550L330 552L325 556L322 554L318 556L319 553L318 553L315 560L315 564L311 565L311 568L301 559L297 550L293 547L295 545L317 540L327 541L333 540L328 542L326 545L327 549L332 550ZM178 605L177 606L179 608L178 608L177 607L177 610L182 610L179 613L182 618L172 622L173 620L170 612L172 610L177 610L176 607L166 600L159 608L155 610L156 605L155 601L157 596L162 595L167 590L170 591L172 590L169 577L167 573L170 571L171 574L173 574L177 569L181 568L191 571L202 565L205 562L205 559L204 556L197 556L194 554L190 554L188 553L188 551L191 547L197 549L199 547L199 544L194 544L200 534L199 527L198 523L199 521L195 518L206 515L212 516L223 514L227 516L233 511L238 511L244 508L252 507L254 503L256 491L262 485L265 478L267 481L274 480L277 481L283 473L284 467L289 464L288 461L289 464L288 465L285 467L284 473L280 478L279 484L284 499L279 506L274 530L273 531L271 531L273 528L273 520L267 520L268 523L265 520L266 518L264 517L260 517L260 521L257 522L255 526L255 530L258 536L260 549L263 556L269 562L271 570L270 575L268 569L267 570L267 569L266 568L266 570L267 571L263 570L263 573L266 575L266 574L266 576L259 580L257 586L258 588L259 593L255 596L256 600L251 603L249 606L246 607L239 616L236 620L239 625L238 627L225 633L225 634L217 633L198 640L195 634L197 630L196 628L194 632L195 627L188 619L189 614L193 613L193 611L191 610L185 614L183 612L184 609L182 605L178 605ZM335 507L339 515L338 521L348 532L336 519L332 517L329 514L329 511L333 507L335 507ZM493 463L495 462L496 464L492 464L490 462L491 461L493 463ZM384 462L384 459L390 458L386 462L384 462ZM477 446L481 446L484 450L481 451L477 447L477 446ZM577 418L575 418L573 421L566 422L560 418L558 412L566 410L572 411L574 414L577 416L577 418ZM508 412L508 406L514 405L517 399L516 398L511 399L504 403L502 406L501 405L500 407L499 407L499 408L496 410L500 414L504 413L505 414L508 412L500 418L496 425L492 425L490 424L487 425L486 429L476 427L464 427L461 429L458 427L449 430L448 432L447 430L439 432L432 435L432 437L430 436L423 439L418 439L414 440L400 447L397 453L397 452L395 452L389 457L382 458L378 458L372 452L359 437L359 440L348 430L327 440L326 443L326 441L327 442L334 437L321 448L318 449L318 442L314 440L302 443L297 451L292 449L290 449L290 450L287 451L284 454L280 462L282 464L281 464L278 468L275 468L274 466L273 463L275 461L274 458L266 455L264 458L262 455L260 455L258 457L256 456L254 459L260 464L261 468L256 469L255 471L251 472L244 475L242 480L237 482L231 483L224 481L222 482L222 481L222 482L218 480L215 480L215 478L213 480L215 480L214 481L206 480L202 488L204 496L197 502L197 509L192 516L194 523L192 526L192 527L195 529L188 540L188 542L177 555L164 556L164 563L160 562L150 568L144 576L147 582L154 592L150 596L148 609L144 614L145 615L149 613L153 614L156 613L154 614L158 614L160 616L157 622L161 621L162 622L158 628L158 634L151 632L148 627L140 624L131 628L131 630L129 633L126 631L123 632L124 633L123 636L127 637L128 639L130 638L131 639L137 634L144 631L147 632L149 632L147 632L147 637L155 642L162 637L166 632L170 632L172 629L172 630L177 631L178 628L180 627L182 634L179 637L177 645L175 648L180 655L184 657L182 658L183 659L183 668L181 679L169 679L163 683L163 686L169 689L171 691L170 692L168 692L163 690L161 686L158 685L157 679L155 676L152 664L131 642L119 637L109 635L107 627L96 610L92 590L87 584L84 583L81 579L79 580L79 578L78 580L77 608L79 610L77 609L76 622L73 622L73 616L72 615L72 613L70 610L65 610L68 609L69 606L68 602L69 600L68 600L69 599L68 598L69 597L68 596L69 595L68 594L70 593L69 592L70 591L69 590L70 590L69 586L70 585L69 584L70 581L69 579L72 565L75 561L83 535L107 485L112 475L111 474L112 476L115 475L123 467L146 428L153 428L161 419L171 404L182 385L181 384L182 383L182 387L183 386L183 384L184 385L184 383L185 384L184 383L186 384L185 382L183 383L184 382L186 384L191 381L193 383L202 385L226 396L232 397L252 392L266 386L301 364L308 365L316 363L339 372L355 375L366 375L393 371L407 365L419 364L429 361L468 331L480 317L505 278L524 243L528 239L552 183L566 170L580 152L595 123L602 116L602 114L603 116L604 116L603 116L601 118L603 117L605 118L604 116L608 118L607 117L610 117L608 115L603 114L613 116L613 118L621 119L631 118L653 120L670 116L696 104L715 93L776 40L787 32L801 27L808 27L816 30L803 42L802 44L802 45L800 44L800 45L798 46L799 47L798 48L797 46L798 45L794 48L797 46L796 48L797 48L798 49L795 49L793 48L790 50L776 65L755 95L748 114L747 127L751 145L761 162L766 166L769 171L772 173L770 172L770 174L772 173L771 177L778 187L782 189L780 190L781 191L782 189L781 191L783 196L785 199L787 198L788 199L787 201L789 204L790 208L788 209L788 205L786 204L786 207L786 204L784 202L783 203L786 204L785 206L784 206L785 205L782 204L783 205L781 205L781 206L784 207L780 207L782 208L780 209L782 209L785 208L788 210L785 208L782 210L778 209L778 210L777 211L780 211L778 211L778 213L780 212L778 213L774 236L776 258L778 263L780 264L778 264L780 264L778 267L778 269L784 306L784 324L783 327L783 324L782 325L783 323L778 330L773 334L768 337L771 340L769 338L767 337L767 336L768 338L769 338L771 340L769 338L768 338L767 337L762 342L752 355L748 363L745 370L747 371L744 373L745 371L739 386L739 388L740 389L738 389L731 419L732 420L733 415L732 420L733 421L731 421L731 422L733 421L730 424L730 427L731 425L723 448L719 458L717 459L712 457L711 459L708 456L705 456L699 458L695 461L684 459L671 449L668 444L649 426L644 423L639 421L629 412L628 412L627 410L619 402L613 403L606 407L603 413L602 420L596 422L592 422L586 417L584 417L578 415L575 412L574 409L568 405L565 401L561 400L561 399L549 392L547 392L548 393L547 393L548 398L549 397L551 399L550 400L547 400L541 412L538 415L523 417L524 418L519 414L513 411L508 412ZM921 337L919 337L919 335L923 333L922 336L924 334L933 331L936 335L932 338L924 338L922 340L921 339L921 337ZM898 316L893 317L891 316L890 313L898 316ZM882 302L881 301L880 302L882 303L880 303L882 304L881 304L881 305L886 312L894 319L891 319L881 307L880 305L880 301L882 302ZM925 280L932 272L957 273L962 270L960 272L964 271L968 267L976 270L983 269L985 271L984 290L981 292L980 291L982 291L983 287L982 284L979 282L981 278L976 282L977 283L976 284L968 282L961 284L959 284L948 289L947 291L946 292L946 294L952 295L952 299L950 309L944 316L934 316L930 315L928 315L930 315L934 316L944 317L941 320L936 322L938 322L924 330L922 328L921 330L922 329L920 328L916 331L913 321L912 321L909 319L909 320L907 319L907 315L900 313L896 315L887 311L883 308L884 302L893 295L899 286L899 285L900 286L902 283L908 281L913 281L915 279L925 280ZM808 180L806 179L808 179L807 178L806 179L806 177L808 178L808 180ZM800 174L803 175L801 173L805 174L804 176L800 174ZM39 860L36 809L35 808L37 809L37 812L37 808L41 808L43 814L41 817L41 820L39 821L40 833L45 831L45 829L45 832L46 829L46 831L51 828L53 828L51 832L52 836L59 834L64 838L73 837L73 841L75 848L72 850L76 855L80 854L84 850L86 851L85 850L90 840L87 837L81 835L77 832L78 830L79 829L84 832L82 830L79 829L78 823L75 821L74 817L67 811L62 809L58 804L56 798L52 792L50 785L52 783L50 772L45 774L41 770L40 773L38 773L41 776L40 777L40 781L38 783L40 788L38 788L40 790L38 793L40 793L42 798L38 798L40 800L42 800L37 804L41 805L40 807L35 808L36 804L39 753L35 728L38 705L51 647L61 623L65 617L69 619L69 621L68 619L69 621L67 622L69 622L68 625L67 623L69 627L69 623L70 627L69 628L70 628L72 631L68 629L69 632L71 633L69 636L65 639L63 642L67 648L59 651L57 661L61 660L71 665L71 667L66 668L67 669L70 668L71 669L70 674L71 676L73 675L77 679L83 680L90 680L93 682L94 686L89 686L87 688L88 692L92 698L91 698L92 699L91 701L92 707L94 707L95 706L94 702L95 695L98 693L101 692L109 693L119 691L145 703L153 708L154 711L159 712L163 710L169 703L174 690L175 701L178 706L177 708L176 707L176 711L181 715L184 723L189 726L186 725L184 727L179 736L180 738L184 740L185 739L184 738L186 739L188 736L188 744L191 750L199 754L205 754L225 748L227 746L229 735L228 724L226 718L230 711L233 709L235 705L232 699L219 690L218 691L215 686L213 675L208 673L209 666L212 664L221 667L225 665L233 656L238 649L241 637L250 626L253 625L257 630L259 630L262 626L267 628L268 623L271 621L272 624L274 627L279 626L282 624L282 618L278 617L274 618L272 613L269 620L265 616L262 618L254 620L254 617L263 598L268 592L266 586L270 587L280 581L286 572L296 565L310 572L315 572L318 575L320 574L320 572L318 571L318 568L315 566L324 566L328 564L342 574L341 579L348 599L358 612L362 618L365 620L361 618L352 624L345 635L344 641L342 642L339 640L337 642L338 652L340 654L336 654L334 655L325 663L323 671L321 674L321 686L325 693L324 693L325 694L324 699L325 698L325 700L323 700L326 704L331 704L337 696L338 691L335 685L337 677L343 675L345 675L345 678L349 679L354 674L354 668L347 670L342 668L350 660L354 648L356 653L354 655L354 659L357 664L359 667L365 667L373 662L377 664L387 663L389 664L387 664L388 666L391 665L395 667L399 674L397 674L396 677L397 678L388 684L387 683L386 689L383 694L384 695L386 695L388 704L393 712L398 716L402 717L400 723L400 724L402 724L402 721L411 713L414 713L420 716L422 716L420 712L420 704L421 701L423 698L421 697L418 698L412 703L403 706L399 706L396 702L396 694L399 680L399 677L397 676L401 675L403 670L404 660L407 656L408 648L406 638L402 627L398 623L392 624L385 629L379 629L376 633L369 636L363 642L359 639L357 636L357 632L361 630L367 622L369 621L372 617L376 613L381 605L382 599L382 593L380 589L369 584L365 585L366 573L362 564L360 562L368 551L373 538L372 528L369 524L359 517L358 514L359 514L360 513L358 514L363 498L368 493L369 489L374 486L377 481L378 481L382 471L393 469L395 466L396 457L399 453L401 454L410 451L416 448L437 443L458 444L465 446L478 452L487 460L484 463L482 470L483 472L485 475L483 474L484 475L482 478L479 473L477 472L473 478L478 489L480 490L482 495L484 493L485 474L494 473L498 471L502 460L502 461L503 460L502 459L505 459L514 447L514 437L520 431L536 427L547 423L567 428L571 426L577 421L576 422L578 420L583 419L584 419L583 420L587 420L593 425L597 425L597 426L598 426L602 422L603 423L608 414L615 408L619 408L623 410L627 419L633 424L631 425L632 426L635 425L639 428L638 430L650 438L658 448L674 460L684 464L685 463L687 465L708 463L708 460L710 462L709 461L710 464L708 465L707 471L705 472L702 476L703 478L705 477L705 478L699 488L698 499L697 505L698 506L697 506L697 511L696 513L697 518L697 535L700 559L701 563L703 563L701 564L703 563L701 564L700 565L706 588L707 591L708 591L707 592L718 609L718 618L717 620L715 620L709 617L693 615L684 611L679 614L677 619L672 621L666 618L665 613L666 612L662 613L662 611L660 611L659 612L650 614L647 618L646 622L641 625L641 626L638 626L637 623L634 621L629 623L627 625L623 626L620 628L620 633L611 634L604 642L600 641L602 646L600 645L596 647L595 649L594 648L590 650L585 649L581 651L571 651L568 653L561 653L554 658L557 658L559 656L568 658L572 654L580 654L586 652L587 653L592 653L597 651L600 652L603 651L606 648L610 649L611 647L610 646L613 642L616 642L619 639L621 640L625 638L625 635L631 628L633 627L639 633L642 632L650 624L650 620L652 615L654 617L658 617L663 620L661 618L666 619L672 626L673 629L678 633L693 624L697 623L703 626L708 624L711 622L720 622L724 626L727 644L723 645L726 653L726 656L721 666L714 669L709 673L710 674L705 675L700 684L702 683L702 684L697 686L693 691L691 691L690 697L688 703L683 706L682 711L683 721L684 722L684 731L685 734L680 750L672 751L656 760L652 758L651 755L642 754L638 755L639 756L632 756L628 759L634 757L628 760L636 757L643 756L650 758L648 758L649 759L650 758L656 761L672 752L679 752L683 750L694 754L706 753L705 752L700 751L692 752L689 750L687 747L684 748L682 747L685 746L688 739L687 726L686 724L687 710L688 712L690 708L693 707L694 705L693 702L699 692L704 690L709 684L708 679L709 675L711 676L713 679L716 679L721 682L722 692L727 701L737 714L747 721L770 728L780 728L802 725L808 722L822 719L833 718L835 716L835 718L836 718L851 714L860 714L864 717L874 719L881 728L885 743L892 747L897 752L900 753L904 758L908 761L908 765L910 767L909 772L906 771L903 774L901 778L904 781L902 780L899 785L901 787L899 788L901 787L901 789L899 789L899 790L900 791L899 792L899 796L897 803L897 825L884 842L881 849L875 853L872 856L870 860L766 860L764 859L763 860L757 860L755 859L756 853L755 852L753 854L748 851L744 854L741 853L739 854L736 853L733 855L733 856L735 860L39 860Z';
 
 function drawMap(res){
-  // landmassen: kysten lukket langs kortets nederste kant
-  const c0=COAST[0], c1=COAST[COAST.length-1];
-  const land=smooth(COAST)+' L'+px(c1[0]).toFixed(1)+' '+(MAPH+4)+' L'+px(c0[0]).toFixed(1)+' '+(MAPH+4)+' Z';
-  const pins=res.map(a=>{
-    const on=a.spot.id===sel, r=on?11:8;
+  /* de bedste tegnes øverst, det valgte sted allerøverst */
+  const order=res.slice().sort((x,y)=>(x.spot.id===sel)-(y.spot.id===sel) || x.score-y.score);
+  const pins=order.map(a=>{
+    const on=a.spot.id===sel, r=on?11:6.5;
     return '<circle class="pin'+(on?' sel':'')+'" cx="'+px(a.spot.lon).toFixed(1)+
       '" cy="'+py(a.spot.lat).toFixed(1)+'" r="'+r+'" fill="'+colFor(a.score)+
       '" data-s="'+a.spot.id+'"><title>'+a.spot.n+' · '+a.score.toFixed(1)+'/10</title></circle>';
@@ -1035,11 +1037,7 @@ function drawMap(res){
 
   document.getElementById('map').innerHTML=
     '<svg viewBox="0 0 '+MAPW+' '+MAPH+'" role="img" aria-label="Kort over Nordjyllands kyster">'+
-    '<path class="land" d="'+land+'"/>'+
-    '<path class="fjord" d="'+smooth(FJORD)+'"/>'+
-    '<path class="fjord" d="'+smooth(MARIAGER)+'"/>'+
-    '<path class="fjord" d="'+smooth(RANDERS)+'"/>'+
-    '<path class="coast" d="'+smooth(COAST)+'"/>'+
+    '<path class="land" d="'+LAND+'"/>'+
     pins+lab+'</svg>';
   document.querySelectorAll('#map .pin').forEach(c=>
     c.onclick=()=>{ sel=c.dataset.s; render(); });
@@ -1073,41 +1071,50 @@ function render(){
   document.getElementById('detail').innerHTML=detailCard(a,NIGHTS[night]);
   document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{water=b.dataset.w;render();});
 
-  document.getElementById('rank').innerHTML=res.map(x=>
+  /* listen viser de 15 bedste; resten foldes ud på knappen. Det valgte
+     sted vises altid, også når det ligger længere nede. */
+  let shown = rankAll ? res : res.slice(0,RANK_TOP);
+  if(!rankAll && !shown.find(x=>x.spot.id===sel)) shown=shown.concat(res.filter(x=>x.spot.id===sel));
+  document.getElementById('rank').innerHTML=shown.map(x=>
     '<button class="rrow" aria-pressed="'+(x.spot.id===sel)+'" data-s="'+x.spot.id+'">'+
     '<i class="rdot" style="background:'+colFor(x.score)+'"></i>'+
     '<span class="rname"><b>'+x.spot.n+'</b><i>'+x.spot.a+' · vender mod '+
       card(x.spot.f)+' '+x.spot.f+'°'+(x.spot.v?' ✓':' ~')+'</i></span>'+
     '<span class="rtid">'+x.from+'<i>'+(x.dark?'mørkt':'lyst')+'</i></span>'+
-    '<span class="rsc" style="color:'+colFor(x.score)+'">'+x.score.toFixed(1)+'</span></button>').join('');
+    '<span class="rsc" style="color:'+colFor(x.score)+'">'+x.score.toFixed(1)+'</span></button>').join('')+
+    (res.length>RANK_TOP ? '<button class="rmore" id="rmore">'+
+      (rankAll ? 'Vis kun de '+RANK_TOP+' bedste' : 'Vis alle '+res.length+' steder')+'</button>' : '');
   document.querySelectorAll('.rrow').forEach(b=>b.onclick=()=>{sel=b.dataset.s;render();});
+  const rm=document.getElementById('rmore'); if(rm) rm.onclick=()=>{rankAll=!rankAll;render();};
 
   document.getElementById('note').innerHTML=
-    '<b>Målt vind:</b> DMI Frie Data, ti stationer, ti minutters opløsning, fire døgn '+
+    '<b>Målt vind:</b> DMI Frie Data, elleve stationer, ti minutters opløsning, fire døgn '+
     'bagud. Hver kyst får et afstandsvægtet gennemsnit af de nærmeste tre inden for 90 km: '+
-    'de åbne kyster kun fra Hanstholm Fyr, Hirtshals Fyr, Skagen Fyr og Anholt Havn, som står ved havet, '+
+    'de åbne kyster kun fra Hanstholm Fyr, Hirtshals Fyr, Skagen Fyr, Anholt Havn og Hvide Sande, som står ved havet, '+
     'fjordkysterne kun fra Silstrup, Rønbjerg, Flyvestation Aalborg, Tylstrup, Stenhøj og Års Syd, '+
     'der ligger inde i landet og dermed er lige så afskærmede som fjorden selv. '+
     'De målte timer overskriver prognosen bagud, så fase 1 vurderes på hvad der faktisk skete. '+
-    'Ni af DMI’s stationer i området svarer tomt og er udeladt, blandt dem Thyborøn og Vestervig; '+
-    'derfor får Agger og resten af Thy vinden fra Hanstholm Fyr, 30–45 km væk. '+
+    'Ti af DMI’s stationer i området svarer tomt og er udeladt, blandt dem Thyborøn, Vestervig og Vesterø på Læsø; '+
+    'derfor får Thy vinden fra Hanstholm Fyr og Hvide Sande, Læsø fra Skagen og Anholt. '+
     'Vind, vindstød og solnedgang: Open-Meteo, fire døgns historik og seks frem. '+
     '<b>Kystretning og placering:</b> alle steder er målt (✓). Nogle er aflæst på Ravudsigtens kort, '+
-    'resten har jeg regnet ud fra EMODnet’s havbundsdata: kystlinjen findes på to parallelle snit '+
-    'nogle km fra hinanden, og retningen er vinkelret ud mod vandet. Samme metode rammer Ravudsigten '+
-    'inden for 3–8° ved Løkken, Hou og Tversted. De fleste prikker er rykket ud på selve strandkanten. '+
+    'andre regnet ud fra EMODnet’s havbundsdata (kystlinjen på to parallelle snit), og de nyeste '+
+    'fra OpenStreetMaps kystlinje: retningen er vinkelret på kysten over 5 km omkring stedet. '+
+    'De tre metoder er enige inden for ca. 5° de steder, hvor de er prøvet mod hinanden. '+
+    'Hvert sted er lagt ud på selve strandkanten. '+
     'Slettestrand afviger: havbunden giver 0° (nord), Ravudsigten 336°; appen bruger målingen. '+
     'Vurderingen følger din skala: over 10 m/s river løs, 15–16 er meget godt, '+
     'og vinduet åbner når vinden falder under 10 igen. '+
     'Intet fast jagtvindue — appen gennemløber alle døgnets timer og viser det bedste. '+
     'Mørke straffer ikke scoren; det står kun på kortet, så du ved om ravlampen virker. '+
     'Vandstand: DMI’s tidevandstabel fra '+TSTN.length+' stationer, hvert tiende minut, og målt stand '+
-    'i cm over DVR90 fra Hanstholm, Hirtshals, Frederikshavn, Udbyhøj og Hobro, plus DMI\u2019s registrerede stand '+
-    'fra Thyborøn, Als Odde, Thisted og Haverslev. Fremad regnes tidevand plus vindstuvning plus det målte overskud nu, som '+
+    'i cm over DVR90 fra Hanstholm, Hirtshals, Frederikshavn, Udbyhøj, Grenå og Hobro, plus DMI\u2019s registrerede stand '+
+    'fra Thorsminde, Ferring, Thyborøn, Als Odde, Thisted og Haverslev. Fremad regnes tidevand plus vindstuvning plus det målte overskud nu, som '+
     'klinger af over et døgn. Prøvet af mod Hirtshals 12. oktober: 2,3 cm gennemsnitlig fejl over '+
-    'tolv timer. Skagen, Hals, Egense, Storvorde og Hadsund har kun tabellen; der er kurvens form pålidelig, '+
+    'tolv timer. Skagen, Hals, Egense, Storvorde, Hadsund og Læsø har kun tabellen; der er kurvens form pålidelig, '+
     'niveauet mindre. Mariager Fjord regnes for sig selv, adskilt fra Limfjorden. '+
-    'DMI har ingen offentlig måler ved Hals Havn. Vil du selv sætte vandstanden, så vælg i stedet for Automatisk.';
+    'DMI har ingen offentlig måler ved Hals Havn. Vil du selv sætte vandstanden, så vælg i stedet for Automatisk. '+
+    'Kortet: kystlinje fra OpenStreetMap (© OpenStreetMap-bidragydere, ODbL).';
 }
 
 /* Kort begrundelse for hvorfor netop dette tidsrum vandt døgnets gennemgang. */
