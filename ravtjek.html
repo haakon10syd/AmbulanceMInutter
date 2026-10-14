@@ -124,6 +124,13 @@
   .water > p{margin:0 0 4px;font-size:14px;font-weight:600}
   .water > small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45}
   .water a{color:var(--amber)}
+  .rband{display:flex;height:30px;border-radius:7px;overflow:hidden;margin:10px 0 8px;
+    font-size:11.5px;font-weight:600;letter-spacing:.01em}
+  .rseg{display:flex;align-items:center;justify-content:center;min-width:3px;white-space:nowrap;overflow:hidden}
+  .rseg.r1{background:#b89a5e;color:#1b150b}
+  .rseg.r2{background:#2e7d9a;color:#eaf6fb}
+  .rseg.r3{background:#183747;color:#7f9aa6}
+  .dsplit3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
   .lognote{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 10px}
   .logbtn{width:100%;padding:13px;border-radius:10px;border:1px dashed var(--edge);
     background:transparent;color:var(--sand);font-weight:600}
@@ -288,6 +295,16 @@ const SPOTS=[
  {id:'logstor',    n:'Løgstør',         a:'Limfjorden',       lat:56.965, lon:9.255,  f:350, ff:0.25},
  {id:'thisted',    n:'Thisted',         a:'Limfjorden',       lat:56.955, lon:8.695,  f:5,   ff:0.22}
 ];
+
+/* ============ rækkevidde ============
+   Hvor langt ud man realistisk kan vade, i meter fra vandkanten.
+   Vestkysten (Skagerrak, Jammerbugten, Thy) falder hurtigt til dybt vand.
+   Kattegat og Limfjorden er flade og lavvandede langt ud.
+   Et enkelt sted kan få sin egen værdi med feltet r i SPOTS.            */
+const REACH={vest:15, kattegat:75, fjord:50};
+const coastType=s=> s.ff>=0.95 ? 'vest' : s.ff>=0.5 ? 'kattegat' : 'fjord';
+const COASTNAME={vest:'vestkysten', kattegat:'Kattegat', fjord:'Limfjorden'};
+const reachOf=s=> s.r || REACH[coastType(s)];
 
 const WATER={
   auto: {label:'Automatisk',         f:null, txt:'målt vandstand'},
@@ -706,7 +723,8 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   }
   const calm = compWind<0?1.00 : compWind<4?0.88 : compWind<8?0.70 : 0.50;
   const wf=waterFactor(rec,start,last);
-  const score=Math.round((0.5*energy+0.5*duration)*timing*calm*wf.f*100)/10;
+  const rs=reachSplit(drift(rec,last), reachOf(s)), rf=reachFactor(rs);
+  const score=Math.round((0.5*energy+0.5*duration)*timing*calm*wf.f*rf*100)/10;
 
   /* mørke straffer ikke længere — det afgør kun om ravlampen virker.
      Både aftenen efter solnedgang og timerne før daggry tælles som mørke,
@@ -720,7 +738,7 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   const t1=new Date(new Date(T[last]).getTime()+3600*1000);
 
   return {spot:s, score, peak, hoursSince, sustained, ws, gu, dir, comp, compWind,
-          rain:pr, startIdx:start, stopIdx:last, dark, wf,
+          rain:pr, startIdx:start, stopIdx:last, dark, wf, rf, rs,
           from:T[start].slice(11,16),
           to:pad(t1.getHours())+':00'};
 }
@@ -794,6 +812,27 @@ function split(d){
   const n=w.reduce((a,c)=>a+c,0);
   return w.map(v=>Math.round(v/n*100));
 }
+/* Samme fordeling som split(), men skåret ved kystens rækkevidde:
+   på stranden / inden for vadeafstand / uden for rækkevidde.           */
+function reachSplit(d,reach){
+  if(d==null) return null;
+  let b=0,n=0,f=0; const W=Math.max(200,d*2.2);
+  for(let k=0;k<160;k++){
+    const x=d+(k/159-0.5)*W;
+    if(x<=0) b++; else if(x<=reach) n++; else f++;
+  }
+  const t=b+n+f;
+  return {beach:Math.round(b/t*100), near:Math.round(n/t*100), far:Math.round(f/t*100),
+          share:(b+n)/t, d, reach};
+}
+/* Høj score kræver rav, man kan nå. Ligger 45 % eller mere på stranden
+   eller inden for vadeafstand, tæller scoren fuldt; derunder skæres den
+   ned i forhold, og intet løsrevet rav giver næsten ingenting.          */
+function reachFactor(rs){
+  if(!rs) return 0.10;
+  return Math.max(0.10, Math.min(1, rs.share/0.45));
+}
+
 function driftPct(d){
   if(d<=0) return 8;
   if(d<=100) return 16+d/100*28;
@@ -801,23 +840,29 @@ function driftPct(d){
   return Math.min(96,72+(d-500)/1000*24);
 }
 function driftStrip(rec,stopIdx){
+  const sp=rec.spot, reach=reachOf(sp), ct=coastType(sp);
   const d=drift(rec,stopIdx);
   if(d==null) return '<div class="drift"><p>Hvor ravet står</p>'+
     '<small>Der er ikke revet noget løs på denne kyst i de sidste fire døgn, så der er '+
     'ingen bestand at følge. Et pust over 10 m/s pålands skal til først.</small></div>';
-  const p=split(d);
+  const rs=reachSplit(d,reach);
+  const inside=rs.beach+rs.near;
   const txt = d<5 ? 'På stranden og i vandkanten'
-            : d<60 ? 'Lige uden for vandkanten'
-            : 'Ca. '+Math.round(d/5)*5+' m ude i havet';
+            : d<=reach ? 'Inden for vadeafstand'
+            : 'Ca. '+Math.round(d/5)*5+' m ude \u2014 '+(inside>=45?'det meste kan nås':'mest uden for rækkevidde');
+  const seg=(w,c,l)=> w>0 ? '<div class="rseg '+c+'" style="flex:'+w+'">'+(w>=12?l:'')+'</div>' : '';
   return '<div class="drift"><p>Hvor ravet står</p>'+
     '<div class="dist">'+txt+'</div>'+
-    '<div class="dband"><div class="dseg s1">strand</div><div class="dseg s2">0–100 m</div>'+
-    '<div class="dseg s3">100–500 m</div><div class="dseg s4">500 m+</div>'+
-    '<div class="dmark" style="left:'+driftPct(d).toFixed(1)+'%"></div></div>'+
-    '<div class="dsplit">'+['strand','0–100 m','100–500 m','længere'].map((l,i)=>
-      '<div class="dcell"><b>'+p[i]+'%</b><i>'+l+'</i></div>').join('')+'</div>'+
-    '<small>Egen beregning ud fra vindhistorik og kystens retning — ikke Ravudsigtens tal. '+
-    'Stranden plukkes først; det der står længere ude bliver liggende i ålegræsset.</small></div>';
+    '<div class="rband">'+seg(rs.beach,'r1','strand')+seg(rs.near,'r2','0\u2013'+reach+' m')+
+      seg(rs.far,'r3','for dybt')+'</div>'+
+    '<div class="dsplit3">'+
+      '<div class="dcell"><b>'+rs.beach+'%</b><i>på stranden</i></div>'+
+      '<div class="dcell"><b>'+rs.near+'%</b><i>vadeafstand, 0\u2013'+reach+' m</i></div>'+
+      '<div class="dcell"><b>'+rs.far+'%</b><i>uden for rækkevidde</i></div></div>'+
+    '<small>'+inside+'% kan nås. På '+COASTNAME[ct]+' regner jeg med, at du kan vade cirka '+reach+
+      ' m ud'+(ct==='vest'?', fordi der hurtigt bliver dybt':', fordi der er fladt og lavvandet langt ud')+
+      '. Scoren tæller kun fuldt, når mindst 45% kan nås. '+
+      'Afstanden er min egen beregning ud fra vindhistorik og kystens retning \u2014 ikke Ravudsigtens tal.</small></div>';
 }
 
 /* ============ kort ============
@@ -990,6 +1035,12 @@ function detailCard(d,nn){
       (d.compWind<0 ? 'blæser det fralands ('+card(d.dir)+' '+d.ws.toFixed(0)+' m/s), så søen flader ud'
                     : 'står vinden stadig ind ('+card(d.dir)+' '+d.ws.toFixed(0)+' m/s)')+
       '. Regnet med '+d.wf.txt+'.';
+    if(d.rs && d.rf<1){
+      const ins=d.rs.beach+d.rs.near;
+      why+=' <b>Men kun '+ins+'% kan nås</b> \u2014 resten ligger længere ude end de cirka '+
+        reachOf(d.spot)+' m, du kan vade på '+COASTNAME[coastType(d.spot)]+'. '+
+        'Derfor er scoren skåret ned fra '+(d.score/d.rf).toFixed(1)+'.';
+    }
   }
 
   let danger='';
