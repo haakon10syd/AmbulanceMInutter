@@ -124,6 +124,11 @@
   .water > p{margin:0 0 4px;font-size:14px;font-weight:600}
   .water > small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45}
   .water a{color:var(--amber)}
+  .signs{margin-top:14px;background:var(--panel2);border:1px solid var(--edge);border-radius:12px;padding:12px 14px}
+  .signs > p{margin:0 0 6px;font-size:14px;font-weight:600}
+  .signs ul{margin:0;padding-left:18px}
+  .signs li{font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 6px}
+  .signs li b{color:var(--sand);font-weight:600}
   .rband{display:flex;height:30px;border-radius:7px;overflow:hidden;margin:10px 0 8px;
     font-size:11.5px;font-weight:600;letter-spacing:.01em}
   .rseg{display:flex;align-items:center;justify-content:center;min-width:3px;white-space:nowrap;overflow:hidden}
@@ -267,11 +272,11 @@ const SPOTS=[
  {id:'thorup',     n:'Thorup Strand',   a:'Jammerbugten',     lat:57.157, lon:9.070,  f:343, ff:1.00},
  {id:'slette',     n:'Slettestrand',    a:'Jammerbugten',     lat:57.158, lon:9.172,  f:336, ff:1.00, v:1},
  {id:'tranum',     n:'Tranum Strand',   a:'Jammerbugten',     lat:57.213, lon:9.355,  f:322, ff:1.00},
- {id:'blokhus',    n:'Blokhus',         a:'Jammerbugten',     lat:57.253, lon:9.579,  f:308, ff:1.00, v:1},
- {id:'saltum',     n:'Saltum Strand',   a:'Jammerbugten',     lat:57.285, lon:9.650,  f:303, ff:1.00},
- {id:'lokken',     n:'Løkken',          a:'Jammerbugten',     lat:57.368, lon:9.713,  f:299, ff:1.00, v:1},
- {id:'nrlyngby',   n:'Nørre Lyngby',    a:'Jammerbugten',     lat:57.420, lon:9.760,  f:292, ff:1.00, v:1},
- {id:'lonstrup',   n:'Lønstrup',        a:'Jammerbugten',     lat:57.473, lon:9.800,  f:305, ff:1.00, v:1},
+ {id:'blokhus',    n:'Blokhus',         a:'Jammerbugten',     lat:57.253, lon:9.579,  f:308, ff:1.00, v:1, k:0.55},
+ {id:'saltum',     n:'Saltum Strand',   a:'Jammerbugten',     lat:57.285, lon:9.650,  f:303, ff:1.00, k:0.6},
+ {id:'lokken',     n:'Løkken',          a:'Jammerbugten',     lat:57.368, lon:9.713,  f:299, ff:1.00, v:1, k:0.7},
+ {id:'nrlyngby',   n:'Nørre Lyngby',    a:'Jammerbugten',     lat:57.420, lon:9.760,  f:292, ff:1.00, v:1, k:0.8},
+ {id:'lonstrup',   n:'Lønstrup',        a:'Jammerbugten',     lat:57.473, lon:9.800,  f:305, ff:1.00, v:1, k:0.9},
  {id:'skallerup',  n:'Skallerup Klit',  a:'Skagerrak',        lat:57.515, lon:9.860,  f:313, ff:1.00, v:1},
  {id:'tornby',     n:'Tornby Strand',   a:'Hirtshals',        lat:57.540, lon:9.900,  f:299, ff:1.00, v:1},
  {id:'hirtshals',  n:'Hirtshals',       a:'Skagerrak',        lat:57.588, lon:9.958,  f:315, ff:1.00, v:1},
@@ -712,17 +717,44 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   const last=Math.min(start+WIN-1, T.length-1);
   if(H.wind_speed_10m[start]==null) return null;
 
-  /* fase 1: hvad har revet løs i de 48 timer før vinduet */
-  let peak=0, peakI=-1, sustained=0;
-  for(let i=Math.max(0,start-48); i<start; i++){
+  /* fase 1: hvad har revet løs i de fire døgn før vinduet.
+     eased = sidste time med hård pålandsvind; uret til raven starter dér. */
+  let peak=0, peakI=-1, sustained=0, eased=-1, sx=0, sy=0;
+  for(let i=Math.max(0,start-96); i<start; i++){
     const ws=H.wind_speed_10m[i]; if(ws==null) continue;
     const c=onshore(H.wind_direction_10m[i], s.f);
     const eff = c>0 ? ws*c*s.ff : 0;
     /* >= så lige hårde timer tæller fra den sidste, ikke den første */
     if(eff>0 && eff>=peak){ peak=eff; peakI=i; }
-    if(eff>=10) sustained++;          /* Håkons tærskel */
+    if(eff>=10){                      /* Håkons tærskel */
+      sustained++; eased=i;
+      const a=H.wind_direction_10m[i]*Math.PI/180; sx+=Math.cos(a)*eff; sy+=Math.sin(a)*eff;
+    }
   }
-  const hoursSince = peakI<0 ? null : start-peakI;
+  const hoursSince = eased<0 ? null : start-eased;
+
+  /* Efter en vestenstorm skal vinden dreje, mens den løjer af: mod nordvest
+     kommer raven ind i den nordlige del af Jylland, mod sydvest i den sydlige.
+     Alle vestkyststederne her ligger nord for den linje. Ved svag vind
+     betyder retningen mindre.                                              */
+  let dirF=1, dirTurn=null;
+  if(eased>=0 && coastType(s)==='vest'){
+    const stormDir=(Math.atan2(sy,sx)*180/Math.PI+360)%360;
+    let ex=0,ey=0,ew=0,en=0;
+    for(let i=eased+1;i<=Math.min(start,eased+12);i++){
+      const w=H.wind_speed_10m[i]; if(w==null) continue;
+      const a=H.wind_direction_10m[i]*Math.PI/180; ex+=Math.cos(a)*w; ey+=Math.sin(a)*w; ew+=w; en++;
+    }
+    if(en){
+      const easeDir=(Math.atan2(ey,ex)*180/Math.PI+360)%360, easeWs=ew/en;
+      const delta=((easeDir-stormDir+540)%360)-180;      /* + = drejet med uret, mod nord */
+      const raw=Math.max(0.55,Math.min(1,1+delta/90));   /* ingen regel uden undtagelse */
+      const w=Math.max(0,Math.min(1,(easeWs-3)/4));
+      dirF=1-w*(1-raw);
+      dirTurn=delta;
+    }
+  }
+  const kf = s.k || 1;
 
   /* fase 2: forholdene i selve vinduet */
   let ws=0,gu=0,dirs=[],pr=0,n=0;
@@ -738,22 +770,22 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   const comp=onshore(dir,s.f), compWind=ws*comp;
 
   const energy=Math.min(1,peak/16), duration=Math.min(1,sustained/14);
+  /* Raven skal have mindst 10 timer efter blæsten løjede, før den er inde.
+     Derefter bliver den liggende, så længe vinden er svag; driftmodellen
+     tager sig af at den trækkes ud, hvis vinden stiger. Langsomt aftagende
+     efter tre døgn, fordi den bliver samlet op og sandet til.            */
   let timing=0.05;
-  if(hoursSince!==null && peak>=5){
+  if(hoursSince!==null){
     const h=hoursSince;
-    if(h<6) timing=0.22;
-    else if(h<12) timing=0.22+(h-6)/6*0.63;
-    else if(h<=36) timing=1.00;
-    else if(h<=48) timing=1.00-(h-36)/12*0.45;
-    else if(h<=72) timing=0.55-(h-48)/24*0.40;
-    else timing=0.10;
+    timing = h<3 ? 0.15 : h<10 ? 0.15+(h-3)/7*0.85 : 1.00;
+    if(h>72) timing*=Math.max(0.3, Math.exp(-(h-72)/96));
   }
   const calm = compWind<0?1.00 : compWind<4?0.88 : compWind<8?0.70 : 0.50;
   const wf=waterFactor(rec,start,last);
   const rc=reachFor(s, ws, compWind, wf);
   const rs=reachSplit(drift(rec,last), rc.m), rf=reachFactor(rs);
   if(rs) rs.why=rc.why;
-  const score=Math.round((0.5*energy+0.5*duration)*timing*calm*wf.f*rf*100)/10;
+  const score=Math.round((0.5*energy+0.5*duration)*timing*calm*wf.f*rf*dirF*kf*100)/10;
 
   /* mørke straffer ikke længere — det afgør kun om ravlampen virker.
      Både aftenen efter solnedgang og timerne før daggry tælles som mørke,
@@ -767,7 +799,7 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   const t1=new Date(new Date(T[last]).getTime()+3600*1000);
 
   return {spot:s, score, peak, hoursSince, sustained, ws, gu, dir, comp, compWind,
-          rain:pr, startIdx:start, stopIdx:last, dark, wf, rf, rs,
+          rain:pr, startIdx:start, stopIdx:last, dark, wf, rf, rs, dirF, dirTurn, kf,
           from:T[start].slice(11,16),
           to:pad(t1.getHours())+':00'};
 }
@@ -815,6 +847,14 @@ function assess(rec,nk){
 /* ============ hvor ravet står ============
    Grov driftmodel, kalibreret mod Ravudsigtens placeringsvisning for Tranum
    (80 m ved blæstens slut, 40 m efter 8 timer, 20 m efter 15).            */
+/* Hvor langt ude ligger raven, i meter fra vandkanten?
+   - Hård pålandsvind (10 m/s eller mere) river raven løs, men understrømmen
+     holder den ude, så længe det blæser.
+   - Når vinden løjer af, fører strømmen raven ind, cirka 4 m i timen ved
+     svag vind og langsommere ved jævn vind. Retningen er underordnet, så
+     længe vinden er svag.
+   - Først når vinden stiger igen til 10 m/s eller mere, trækkes raven ud.
+   Kalibreret mod en kendt sekvens: 80 m -> 40 m efter 8 t -> 20 m efter 15 t. */
 function drift(rec, stopIdx){
   const s=rec.spot, H=rec.wx.hourly;
   let d=null;
@@ -822,12 +862,13 @@ function drift(rec, stopIdx){
     const ws=H.wind_speed_10m[i]; if(ws==null) continue;
     const c=onshore(H.wind_direction_10m[i], s.f);
     const eff = c>0 ? ws*c*s.ff : 0;
-    const off = c<0 ? ws*(-c)*s.ff : 0;
-    if(eff>=10){ const lift=80+6*Math.min(12,eff-10); d = d==null?lift:Math.max(d,lift); }
-    else if(d!=null){
-      if(off>3) d+=0.35*off; else d-=0.45*eff;
-      d=Math.max(0,Math.min(1500,d));
-    }
+    if(eff>=10){ const lift=80+6*Math.min(12,eff-10); d = d==null?lift:Math.max(d,lift); continue; }
+    if(d==null) continue;
+    if(ws<6)       d-=4;              /* svag vind: strømmen fører ind */
+    else if(ws<8)  d-=1.5;            /* jævn vind: langsomt ind */
+    else if(ws<10) {}                 /* frisk vind: står stille */
+    else           d+=0.35*ws;        /* stigende vind: trækkes ud */
+    d=Math.max(0,Math.min(1500,d));
   }
   return d;
 }
@@ -1037,6 +1078,18 @@ function altBlock(d){
   return '';
 }
 
+/* Tegn at kigge efter på stedet, efter kysttype. */
+function signs(d){
+  const ct=coastType(d.spot), L=[];
+  L.push('<b>Opskyllet fra seneste højvande.</b> Led i det og på landsiden af tangbunkerne. Længere oppe på stranden ligger gammelt, som andre har gennemgået.');
+  L.push('<b>Ravpindelag</b> \u2014 små sorte træstumper. Følg det; på lavt vand fører det ud mod hullerne i revlen.');
+  L.push('<b>Mange søstjerner på stranden</b> efter en storm: raven følger typisk 10\u201330 timer efter.');
+  L.push('<b>Måger der slås over vandet</b> sidder over opskyl. Står strømmen ind, ligger det inde om 3\u20135 timer.');
+  if(ct==='kattegat') L.push('<b>Revlehuller og høfder.</b> Raven samler sig, hvor vandet løber ind gennem et hul i revlen, og på begge sider af høfderne, fx mellem Sæby og Frederikshavn. Gå aldrig alene ud til revlen.');
+  if(ct==='vest') L.push('<b>Vestkysten:</b> bliv på stranden og i vandkanten. Revlen er livsfarlig dér.');
+  return '<div class="signs"><p>Kig efter</p><ul>'+L.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
+}
+
 function detailCard(d,nn){
   const long=nn.date.toLocaleDateString('da-DK',{weekday:'long',day:'numeric',month:'long'});
   let cls,word,lamp='';
@@ -1047,27 +1100,31 @@ function detailCard(d,nn){
   else { cls='v-wait'; word='VENT'; }
 
   let why;
-  if(d.peak<5){
-    why='Denne kyst har ikke fået pålandsvind af betydning i de sidste 48 timer — '+
-        'kun '+d.peak.toFixed(1)+' m/s effektivt på toppen. Der er ikke flyttet materiale. '+
-        'Den skal have vind fra omkring '+card(d.spot.f)+' ('+d.spot.f+'°) for at komme i spil.';
+  if(d.hoursSince==null){
+    why='Ingen hård pålandsvind (10 m/s eller mere) på denne kyst de sidste fire døgn \u2014 '+
+        'kun '+d.peak.toFixed(1)+' m/s effektivt på toppen. Der er ikke revet noget løs. '+
+        'Den skal have hård vind fra omkring '+card(d.spot.f)+' ('+d.spot.f+'\u00b0) for at komme i spil.';
   } else {
     const t=d.hoursSince;
-    const tw = t<12 ? 'kun '+t+' timer siden toppen — vinden har ikke haft tid til at aftage'
-      : t<=36 ? t+' timer siden toppen, midt i eftervirkningen'
-      : t<=48 ? t+' timer siden toppen, lidt sent'
-      : t+' timer siden toppen — materialet er gammelt';
+    const tw = t<10 ? 'kun '+t+' timer siden blæsten løjede af \u2014 raven er ikke nået ind endnu; det tager typisk mindst 10 timer'
+      : t<=72 ? t+' timer siden blæsten løjede af, så raven har haft tid til at komme ind'
+      : t+' timer siden blæsten løjede af. Så længe vinden holder sig svag, bliver raven liggende, men den bliver samlet op og sander til';
     why = d.peak.toFixed(1)+' m/s effektiv pålandsvind på toppen, '+d.sustained+
       ' timer over 10, '+tw+'. I vinduet '+
       (d.compWind<0 ? 'blæser det fralands ('+card(d.dir)+' '+d.ws.toFixed(0)+' m/s), så søen flader ud'
-                    : 'står vinden stadig ind ('+card(d.dir)+' '+d.ws.toFixed(0)+' m/s)')+
+                    : 'står vinden ind ('+card(d.dir)+' '+d.ws.toFixed(0)+' m/s)')+
       '. Regnet med '+d.wf.txt+'.';
+    if(d.dirF<0.9)
+      why+=' Vinden drejede mod '+(d.dirTurn<0?'syd':'nord')+', da den løjede af, og efter en vestenstorm '+
+        'fører det raven længere '+(d.dirTurn<0?'sydpå':'nordpå')+' langs vestkysten.';
+    if(d.kf<1)
+      why+=' Strømmen langs vestkysten går uden om strækningen ved Blokhus\u2013Rødhus og drejer først ind '+
+        'igen et stykke før Hirtshals, så her kommer der mindre ind.';
     if(d.rs && d.rf<1){
       const ins=d.rs.beach+d.rs.near;
-      why+=' <b>Men kun '+ins+'% kan nås</b> \u2014 '+
+      why+=' <b>Kun '+ins+'% kan nås</b> \u2014 '+
         (d.rs.reach>0 ? 'resten ligger længere ude end de cirka '+d.rs.reach+' m, du kan gå ud.'
-                      : 'resten ligger ude i vandet, og på '+COASTNAME[coastType(d.spot)]+' kommer du ikke ud i dag.')+
-        ' Derfor er scoren skåret ned fra '+(d.score/d.rf).toFixed(1)+'.';
+                      : 'resten ligger ude i vandet, og på '+COASTNAME[coastType(d.spot)]+' kommer du ikke ud i dag.');
     }
   }
 
@@ -1094,12 +1151,12 @@ function detailCard(d,nn){
     '<div class="grid">'+
       '<div><span>Pålands, top</span><em>'+d.peak.toFixed(1)+' m/s</em></div>'+
       '<div><span>Timer over 10</span><em>'+d.sustained+' t</em></div>'+
-      '<div><span>Siden toppen</span><em>'+(d.hoursSince==null?'–':d.hoursSince+' t')+'</em></div>'+
+      '<div><span>Siden det løjede</span><em>'+(d.hoursSince==null?'–':d.hoursSince+' t')+'</em></div>'+
       '<div><span>Vind i vinduet</span><em>'+card(d.dir)+' '+d.ws.toFixed(0)+' m/s</em></div>'+
       '<div><span>Vindstød</span><em>'+d.gu.toFixed(0)+' m/s</em></div>'+
       '<div><span>Nedbør i vinduet</span><em>'+d.rain.toFixed(1)+' mm</em></div>'+
     '</div></div>'+
-    driftStrip(rec,d)+
+    driftStrip(rec,d)+signs(d)+
     waterPanel(d);
 }
 
