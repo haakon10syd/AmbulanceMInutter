@@ -266,39 +266,54 @@
    Hirtshals 314, Blokhus 308 og Slettestrand 336 er Ravudsigtens egne tal.
    fetchF = hvor meget frit stræk der er til at bygge sø.                   */
 const SPOTS=[
- {id:'hanstholm',  n:'Hanstholm',       a:'Thy · Skagerrak',  lat:57.121, lon:8.617,  f:340, ff:1.00},
- {id:'vigso',      n:'Vigsø',           a:'Thy · Skagerrak',  lat:57.115, lon:8.750,  f:352, ff:1.00},
- {id:'bulbjerg',   n:'Bulbjerg',        a:'Jammerbugten',     lat:57.147, lon:9.016,  f:345, ff:1.00},
- {id:'thorup',     n:'Thorup Strand',   a:'Jammerbugten',     lat:57.157, lon:9.070,  f:343, ff:1.00},
- {id:'slette',     n:'Slettestrand',    a:'Jammerbugten',     lat:57.158, lon:9.172,  f:336, ff:1.00, v:1},
- {id:'tranum',     n:'Tranum Strand',   a:'Jammerbugten',     lat:57.213, lon:9.355,  f:322, ff:1.00},
- {id:'blokhus',    n:'Blokhus',         a:'Jammerbugten',     lat:57.253, lon:9.579,  f:308, ff:1.00, v:1, k:0.55},
- {id:'saltum',     n:'Saltum Strand',   a:'Jammerbugten',     lat:57.285, lon:9.650,  f:303, ff:1.00, k:0.6},
- {id:'lokken',     n:'Løkken',          a:'Jammerbugten',     lat:57.368, lon:9.713,  f:299, ff:1.00, v:1, k:0.7},
- {id:'nrlyngby',   n:'Nørre Lyngby',    a:'Jammerbugten',     lat:57.420, lon:9.760,  f:292, ff:1.00, v:1, k:0.8},
- {id:'lonstrup',   n:'Lønstrup',        a:'Jammerbugten',     lat:57.473, lon:9.800,  f:305, ff:1.00, v:1, k:0.9},
- {id:'skallerup',  n:'Skallerup Klit',  a:'Skagerrak',        lat:57.515, lon:9.860,  f:313, ff:1.00, v:1},
- {id:'tornby',     n:'Tornby Strand',   a:'Hirtshals',        lat:57.540, lon:9.900,  f:299, ff:1.00, v:1},
- {id:'hirtshals',  n:'Hirtshals',       a:'Skagerrak',        lat:57.588, lon:9.958,  f:315, ff:1.00, v:1},
- {id:'kjul',       n:'Kjul Strand',     a:'Skagerrak',        lat:57.600, lon:10.010, f:353, ff:1.00, v:1},
- {id:'tversted',   n:'Tversted',        a:'Skagerrak',        lat:57.605, lon:10.145, f:343, ff:1.00, v:1},
- {id:'skiveren',   n:'Skiveren',        a:'Skagerrak',        lat:57.655, lon:10.270, f:329, ff:1.00, v:1},
- {id:'grenen',     n:'Grenen',          a:'Skagen',           lat:57.740, lon:10.620, f:325, ff:1.00},
- {id:'sonderstr',  n:'Skagen Sønderstrand',a:'Kattegat',      lat:57.715, lon:10.595, f:95,  ff:0.85},
- {id:'aalbaek',    n:'Ålbæk',           a:'Kattegat',         lat:57.598, lon:10.420, f:85,  ff:0.85},
- {id:'jerup',      n:'Jerup',           a:'Kattegat',         lat:57.525, lon:10.470, f:86,  ff:0.85},
- {id:'frhavn',     n:'Frederikshavn',   a:'Kattegat',         lat:57.430, lon:10.550, f:99,  ff:0.85, v:1},
- {id:'saeby',      n:'Sæby',            a:'Kattegat',         lat:57.335, lon:10.530, f:80,  ff:0.85, v:1},
- {id:'lyngsaa',    n:'Lyngså',          a:'Kattegat',         lat:57.235, lon:10.500, f:86,  ff:0.85, v:1},
- {id:'voersaa',    n:'Voerså',          a:'Kattegat',         lat:57.195, lon:10.475, f:137, ff:0.85, v:1},
- {id:'asaa',       n:'Asaa',            a:'Kattegat',         lat:57.148, lon:10.420, f:105, ff:0.85, v:1},
- {id:'hou',        n:'Hou',             a:'Kattegat',         lat:57.028, lon:10.320, f:100, ff:0.85, v:1},
- {id:'hals',       n:'Hals',            a:'Kattegat',         lat:56.995, lon:10.315, f:109, ff:0.80, v:1},
- {id:'egense',     n:'Egense',          a:'Limfjorden',       lat:56.975, lon:10.280, f:354, ff:0.25, v:1},
- {id:'storvorde',  n:'Nord for Storvorde',a:'Limfjorden',     lat:57.005, lon:10.150, f:355, ff:0.22},
- {id:'egholm',     n:'Egholm Vest',     a:'Limfjorden',       lat:57.053, lon:9.855,  f:266, ff:0.20, v:1},
- {id:'logstor',    n:'Løgstør',         a:'Limfjorden',       lat:56.965, lon:9.255,  f:350, ff:0.25},
- {id:'thisted',    n:'Thisted',         a:'Limfjorden',       lat:56.955, lon:8.695,  f:5,   ff:0.22}
+ /* Thy: Nordsøkysten fra Agger op til Hanstholm */
+ {id:'agger',      n:'Agger',           a:'Thy · Nordsøen',   lat:56.7825, lon:8.2223,  f:274, ff:1.00, v:1},
+ {id:'stenbjerg',  n:'Stenbjerg',       a:'Thy · Nordsøen',   lat:56.9150, lon:8.3172,  f:295, ff:1.00, v:1},
+ {id:'vorupor',    n:'Nørre Vorupør',   a:'Thy · Nordsøen',   lat:56.9585, lon:8.3651,  f:306, ff:1.00, v:1},
+ {id:'klitmoller', n:'Klitmøller',      a:'Thy · Nordsøen',   lat:57.0425, lon:8.4831,  f:317, ff:1.00, v:1},
+ {id:'hanstholm',  n:'Hanstholm',       a:'Thy · øst for havnen', lat:57.1160, lon:8.6650, f:20, ff:1.00, v:1},
+ {id:'vigso',      n:'Vigsø',           a:'Thy · Jammerbugten', lat:57.1016, lon:8.7500, f:3,  ff:1.00, v:1},
+ {id:'bulbjerg',   n:'Bulbjerg',        a:'Jammerbugten',     lat:57.1488, lon:8.9900,  f:347, ff:1.00, v:1},
+ {id:'thorup',     n:'Thorup Strand',   a:'Jammerbugten',     lat:57.1452, lon:9.0850,  f:18,  ff:1.00, v:1},
+ {id:'slette',     n:'Slettestrand',    a:'Jammerbugten',     lat:57.1370, lon:9.1800,  f:0,   ff:1.00, v:1},
+ {id:'tranum',     n:'Tranum Strand',   a:'Jammerbugten',     lat:57.1614, lon:9.3850,  f:337, ff:1.00, v:1},
+ {id:'blokhus',    n:'Blokhus',         a:'Jammerbugten',     lat:57.2530, lon:9.5790,  f:308, ff:1.00, v:1, k:0.55},
+ {id:'saltum',     n:'Saltum Strand',   a:'Jammerbugten',     lat:57.2850, lon:9.6103,  f:300, ff:1.00, v:1, k:0.6},
+ {id:'lokken',     n:'Løkken',          a:'Jammerbugten',     lat:57.3696, lon:9.7075,  f:299, ff:1.00, v:1, k:0.7},
+ {id:'nrlyngby',   n:'Nørre Lyngby',    a:'Jammerbugten',     lat:57.4214, lon:9.7537,  f:292, ff:1.00, v:1, k:0.8},
+ {id:'lonstrup',   n:'Lønstrup',        a:'Jammerbugten',     lat:57.4749, lon:9.7949,  f:305, ff:1.00, v:1, k:0.9},
+ {id:'skallerup',  n:'Skallerup Klit',  a:'Skagerrak',        lat:57.5134, lon:9.8631,  f:313, ff:1.00, v:1},
+ {id:'tornby',     n:'Tornby Strand',   a:'Hirtshals',        lat:57.5412, lon:9.8960,  f:299, ff:1.00, v:1},
+ {id:'hirtshals',  n:'Hirtshals',       a:'Skagerrak',        lat:57.5914, lon:9.9517,  f:315, ff:1.00, v:1},
+ {id:'kjul',       n:'Kjul Strand',     a:'Skagerrak',        lat:57.5885, lon:10.0126, f:353, ff:1.00, v:1},
+ {id:'tversted',   n:'Tversted',        a:'Skagerrak',        lat:57.5908, lon:10.1531, f:343, ff:1.00, v:1},
+ {id:'skiveren',   n:'Skiveren',        a:'Skagerrak',        lat:57.6278, lon:10.3006, f:329, ff:1.00, v:1},
+ {id:'grenen',     n:'Grenen',          a:'Skagen',           lat:57.7485, lon:10.6000, f:347, ff:1.00, v:1},
+ /* Kattegat fra Skagen ned til Udbyhøj */
+ {id:'sonderstr',  n:'Skagen Sønderstrand',a:'Kattegat',      lat:57.7000, lon:10.5450, f:128, ff:0.85, v:1},
+ {id:'aalbaek',    n:'Ålbæk',           a:'Kattegat',         lat:57.5985, lon:10.4276, f:105, ff:0.85, v:1},
+ {id:'jerup',      n:'Jerup',           a:'Kattegat',         lat:57.5250, lon:10.4604, f:61,  ff:0.85, v:1},
+ {id:'frhavn',     n:'Frederikshavn',   a:'Kattegat',         lat:57.4310, lon:10.5382, f:99,  ff:0.85, v:1},
+ {id:'saeby',      n:'Sæby',            a:'Kattegat',         lat:57.3346, lon:10.5255, f:80,  ff:0.85, v:1},
+ {id:'lyngsaa',    n:'Lyngså',          a:'Kattegat',         lat:57.2366, lon:10.5416, f:86,  ff:0.85, v:1},
+ {id:'voersaa',    n:'Voerså',          a:'Kattegat',         lat:57.1952, lon:10.4747, f:137, ff:0.85, v:1},
+ {id:'asaa',       n:'Asaa',            a:'Kattegat',         lat:57.1483, lon:10.4178, f:105, ff:0.85, v:1},
+ {id:'hou',        n:'Hou',             a:'Kattegat',         lat:57.0248, lon:10.3534, f:100, ff:0.85, v:1},
+ {id:'hals',       n:'Hals',            a:'Kattegat',         lat:56.9913, lon:10.3347, f:109, ff:0.80, v:1},
+ {id:'dokkedal',   n:'Dokkedal',        a:'Kattegat',         lat:56.8850, lon:10.2627, f:88,  ff:0.85, v:1},
+ {id:'osthurup',   n:'Øster Hurup',     a:'Kattegat',         lat:56.8050, lon:10.2755, f:81,  ff:0.85, v:1},
+ {id:'als',        n:'Als',             a:'Kattegat',         lat:56.7575, lon:10.3000, f:71,  ff:0.85, v:1},
+ {id:'udbyhoj',    n:'Udbyhøj Nord',    a:'Kattegat',         lat:56.6250, lon:10.3520, f:100, ff:0.85, v:1},
+ /* Limfjorden */
+ {id:'egense',     n:'Egense',          a:'Limfjorden',       lat:56.9810, lon:10.2793, f:354, ff:0.25, v:1},
+ {id:'storvorde',  n:'Nord for Storvorde',a:'Limfjorden',     lat:57.0058, lon:10.1500, f:42,  ff:0.22, v:1},
+ {id:'egholm',     n:'Egholm Vest',     a:'Limfjorden',       lat:57.0530, lon:9.8550,  f:266, ff:0.20, v:1},
+ {id:'logstor',    n:'Løgstør',         a:'Limfjorden',       lat:56.9665, lon:9.2523,  f:325, ff:0.25, v:1},
+ {id:'thisted',    n:'Thisted',         a:'Limfjorden',       lat:56.9462, lon:8.6950,  f:173, ff:0.22, v:1},
+ /* Mariager Fjord: smal og lang, raven skal langt ind, derfor lav ff */
+ {id:'hadsund',    n:'Hadsund',         a:'Mariager Fjord',   lat:56.7078, lon:10.1150, f:134, ff:0.18, b:'mar', v:1},
+ {id:'mariager',   n:'Mariager',        a:'Mariager Fjord',   lat:56.6594, lon:9.9850,  f:330, ff:0.12, b:'mar', v:1},
+ {id:'hobro',      n:'Hobro',           a:'Mariager Fjord',   lat:56.6463, lon:9.8550,  f:173, ff:0.10, b:'mar', v:1}
 ];
 
 /* ============ rækkevidde ============
@@ -309,10 +324,12 @@ const SPOTS=[
      meter; helt stille OG lavvande, op til 5 m.
    - Kattegat er fladt: flere hundrede meter ved lav vandstand, kortere
      ved højvande, halvt så langt når der står bølger ind.
-   - Limfjorden: 50 m, indtil andet er oplyst.
+   - Fjordene (Limfjorden, Mariager Fjord): 50 m, indtil andet er oplyst.
    Et enkelt sted kan få en fast værdi med feltet r i SPOTS.            */
 const coastType=s=> s.ff>=0.95 ? 'vest' : s.ff>=0.5 ? 'kattegat' : 'fjord';
 const COASTNAME={vest:'vestkysten', kattegat:'Kattegat', fjord:'Limfjorden'};
+const fjordName=s=> s.b==='mar' ? 'Mariager Fjord' : 'Limfjorden';
+const coastName=s=>{ const c=coastType(s); return c==='fjord' ? fjordName(s) : COASTNAME[c]; };
 
 /* ws = middelvind i vinduet, cw = dens pålandskomposant, wf = vandstand */
 function reachFor(s, ws, cw, wf){
@@ -334,7 +351,7 @@ function reachFor(s, ws, cw, wf){
       (lvl==null?'ukendt vandstand':'vandstanden omkring '+(lvl>0?'+':'')+Math.round(lvl)+' cm')+
       (waves?' og bølger ind mod kysten':'')+' regner jeg med cirka '+m+' m, før vandet når 50 cm.'};
   }
-  return {m:50, why:'i Limfjorden regner jeg med cirka 50 m, før vandet når 50 cm.'};
+  return {m:50, why:'i '+fjordName(s)+' regner jeg med cirka 50 m, før vandet når 50 cm.'};
 }
 
 const WATER={
@@ -345,9 +362,11 @@ const WATER={
 };
 
 /* DMI Frie Data — målte observationer, ingen nøgle.
-   Kun disse otte stationer i Nordjylland leverer faktisk data; de øvrige
+   Kun disse ti stationer i området leverer faktisk data; de øvrige
    i DMI's liste (06029 Grønlandshavnen, 06042/06043 Frederikshavn,
-   06034 Sindal, 06044 Hals, 20012 Kandestederne) svarer tomt.
+   06034 Sindal, 06044 Hals, 20012 Kandestederne, 06052 Thyborøn,
+   06051 Vestervig, 06049 Hald Vest) svarer tomt. Agger og resten af Thy
+   får derfor vinden fra Hanstholm Fyr, Kattegat syd for Hals fra Anholt.
    kind:'coast' står ved åbent vand og repræsenterer vinden over havet;
    kind:'land' ligger inde i landet og bruges kun til fjordkysterne,
    som reelt er lige så afskærmede.                                      */
@@ -360,7 +379,9 @@ const STATIONS=[
   {id:'06031', n:'Tylstrup',             lat:57.1852, lon:9.9527,  kind:'land'},
   {id:'06030', n:'Flyvestation Aalborg', lat:57.0963, lon:9.8505,  kind:'land'},
   {id:'06019', n:'Silstrup',             lat:56.9300, lon:8.6412,  kind:'land'},
-  {id:'06063', n:'R\u00f8nbjerg Huse Havn',  lat:56.8910, lon:9.1654,  kind:'land'}
+  {id:'06063', n:'R\u00f8nbjerg Huse Havn',  lat:56.8910, lon:9.1654,  kind:'land'},
+  {id:'06079', n:'Anholt Havn',          lat:56.7169, lon:11.5098, kind:'coast'},
+  {id:'06065', n:'\u00c5rs Syd',              lat:56.7558, lon:9.5067,  kind:'land'}
 ];
 const MAXKM=90;   /* længere væk end dette regnes målingen ikke som dækkende */
 
@@ -371,9 +392,12 @@ const MAXKM=90;   /* længere væk end dette regnes målingen ikke som dækkende
    - observation/sea_reg: DMI's registrerede stand; sådan melder
      fjordmålerne. Nulpunktet er ikke dokumenteret, men tallene ligger
      tæt på DVR90 og følger tabellen, så de bruges mest for udviklingen.
-   Målinger findes ved Hanstholm, Hirtshals og Frederikshavn (sealev_dvr)
-   og ved Thisted og Haverslev i Limfjorden (sea_reg). Skagen, Hals Havn,
-   Hals Barre, Aalborg og Løgstør har kun tabellen.                     */
+   Målinger findes ved Hanstholm, Hirtshals, Frederikshavn, Udbyhøj og
+   Hobro (sealev_dvr) og ved Thyborøn, Als Odde, Thisted og Haverslev
+   (sea_reg). Skagen, Hals, Aalborg, Løgstør, Hadsund og Saltfabrikken
+   har kun tabellen. oid = måleren har et andet stations-id end tabellen.
+   b = fjordbassin: 'lim' Limfjorden (standard), 'mar' Mariager Fjord.
+   Fjordene deler ikke vand, så en fjordkyst bruger kun sit eget bassin. */
 const OCEAN_URL='https://opendataapi.dmi.dk/v2/oceanObs/collections/observation/items';
 const TIDE_URL ='https://opendataapi.dmi.dk/v2/oceanObs/collections/tidewater/items';
 const TSTN=[
@@ -388,7 +412,13 @@ const TSTN=[
   {id:'20333', n:'Haverslev Havn',   lat:57.0284, lon:9.4017,  kind:'fjord', obs:'sea_reg'},
   {id:'20423', n:'Løgstør',          lat:56.9678, lon:9.2459,  kind:'fjord'},
   {id:'20412', n:'Rønbjerg Huse',    lat:56.8924, lon:9.1668,  kind:'fjord'},
-  {id:'21058', n:'Thisted',          lat:56.9538, lon:8.6941,  kind:'fjord', obs:'sea_reg'}
+  {id:'21058', n:'Thisted',          lat:56.9538, lon:8.6941,  kind:'fjord', obs:'sea_reg'},
+  {id:'24006', oid:'9004203', n:'Thyborøn', lat:56.7077, lon:8.2088, kind:'coast', obs:'sea_reg'},
+  {id:'20676', n:'Als Odde',         lat:56.7052, lon:10.3292, kind:'coast', obs:'sea_reg'},
+  {id:'22009', n:'Udbyhøj',          lat:56.6105, lon:10.3054, kind:'coast', obs:'sealev_dvr'},
+  {id:'20567', n:'Hobro',            lat:56.6388, lon:9.8038,  kind:'fjord', b:'mar', obs:'sealev_dvr'},
+  {id:'20575', n:'Saltfabrikken',    lat:56.6829, lon:10.0384, kind:'fjord', b:'mar'},
+  {id:'20577', n:'Hadsund',          lat:56.7168, lon:10.1255, kind:'fjord', b:'mar'}
 ];
 /* længere fra en måler end dette hænges kurven ikke op på en måling.
    Fjorden er strammere: vandstanden kan stå helt forskelligt i hver ende. */
@@ -557,11 +587,17 @@ function patchMeasured(){
 function waterSrc(spot){
   if(spot._w) return spot._w;
   const kind = spot.ff>=0.5 ? 'coast' : 'fjord';
-  const near=list=>list.map(t=>({t, d:km(spot.lat,spot.lon,t.lat,t.lon)}))
-                       .sort((x,y)=>x.d-y.d)[0]||null;
-  const tide=near(TSTN.filter(t=>t.kind===kind));
-  let obs = near(TSTN.filter(t=>t.obs && t.kind===kind));
-  if(obs && obs.d>OBS_MAXKM[kind]) obs=null;
+  const basin = x => x.b || 'lim';
+  const pool = TSTN.filter(t=>t.kind===kind && (kind==='coast' || basin(t)===basin(spot)));
+  const byDist=list=>list.map(t=>({t, d:km(spot.lat,spot.lon,t.lat,t.lon)}))
+                         .sort((x,y)=>x.d-y.d);
+  const tide=byDist(pool)[0]||null;
+  const cand=byDist(pool.filter(t=>t.obs)).filter(x=>x.d<=OBS_MAXKM[kind]);
+  /* En måler i DVR90 foretrækkes, hvis den højst er halvanden gang så langt
+     væk som den nærmeste med ukendt nulpunkt. */
+  let obs=cand[0]||null;
+  const dvr=cand.find(x=>x.t.obs==='sealev_dvr');
+  if(obs && obs.t.obs!=='sealev_dvr' && dvr && dvr.d<=obs.d*1.5) obs=dvr;
   return spot._w={tide, obs};
 }
 
@@ -588,7 +624,7 @@ async function loadWater(){
   };
   const obs=async st=>{
     try{
-      const r=await fetch(OCEAN_URL+'?stationId='+st.id+'&parameterId='+st.obs+
+      const r=await fetch(OCEAN_URL+'?stationId='+(st.oid||st.id)+'&parameterId='+st.obs+
         '&datetime='+encodeURIComponent(ospan)+'&limit=300');
       if(!r.ok) return null;
       const f=(await r.json()).features||[];
@@ -938,21 +974,36 @@ function driftStrip(rec,a){
    Tegnet i appen selv. Ingen flisetjeneste — de kræver enten nøgle eller
    afviser kald fra en lokal fil, og så står man med et tomt kort.          */
 const colFor=s=> s>=7?'#4fae7c' : s>=4?'#f0a848' : s>=2?'#c4b48a' : '#d9584a';
-const MAPW=1000, MAPH=725, LON0=8.45, LAT1=57.80, KX=434.8, KY=804.8;
+/* Udsnit: Agger/Thyborøn i sydvest, Skagen i nord, Udbyhøj i sydøst.
+   Lige store km på begge akser ved midterbredden 57,19°.               */
+const MAPW=1000, MAPH=847, LON0=8.12, LAT1=57.80, KX=375.9, KY=693.8;
 const px=lon=>(lon-LON0)*KX, py=lat=>(LAT1-lat)*KY;
 
-/* Kystlinjen: stederne selv plus nogle få formpunkter imellem. */
-const COAST=[[8.46,57.09],[8.617,57.121],[8.750,57.115],[8.90,57.13],[9.016,57.147],
- [9.070,57.157],[9.172,57.158],[9.26,57.18],[9.355,57.213],[9.46,57.235],
- [9.579,57.253],[9.650,57.285],[9.713,57.368],[9.760,57.420],[9.800,57.473],
- [9.860,57.515],[9.900,57.540],[9.958,57.588],[10.010,57.600],[10.145,57.605],
- [10.270,57.655],[10.45,57.72],[10.620,57.740],[10.595,57.715],[10.50,57.66],
- [10.420,57.598],[10.470,57.525],[10.550,57.430],[10.530,57.335],[10.500,57.235],
- [10.475,57.195],[10.420,57.148],[10.350,57.08],[10.320,57.028],[10.315,56.995],
- [10.26,56.96]];
-const FJORD=[[10.26,56.96],[10.15,56.985],[10.00,57.01],[9.90,57.05],[9.80,57.06],
- [9.60,57.02],[9.40,56.975],[9.255,56.965],[9.05,56.93],[8.85,56.94],
- [8.695,56.955],[8.50,56.99]];
+/* Kystlinjen, med uret fra sydvest. Punkterne er de målte strandkanter
+   (EMODnet), kun enkelte formpunkter imellem er skønnet (mærket ~).      */
+const COAST=[[8.170,56.575],[8.190,56.640],[8.205,56.700],[8.2223,56.7825],[8.270,56.850],
+ [8.3172,56.915],[8.3651,56.9585],[8.4831,57.0425],[8.560,57.110],[8.590,57.1247],
+ [8.650,57.119],[8.680,57.113],[8.720,57.1025],[8.780,57.1007],[8.940,57.1425],
+ [8.980,57.156],[9.040,57.155],[9.070,57.148],[9.100,57.1425],[9.130,57.139],
+ [9.170,57.1368],[9.210,57.1386],[9.350,57.1535],[9.420,57.1693],[9.500,57.210],
+ [9.576,57.253],[9.589,57.265],[9.632,57.305],[9.713,57.375],[9.760,57.4297],
+ [9.800,57.4788],[9.860,57.5116],[9.900,57.5451],[9.958,57.5948],[10.010,57.5883],
+ [10.145,57.5894],[10.270,57.6179],[10.400,57.672],[10.535,57.735],[10.580,57.746],
+ [10.620,57.7508],[10.648,57.750],[10.620,57.7215],[10.590,57.715],[10.552,57.705],
+ [10.538,57.695],[10.480,57.650],[10.434,57.612],[10.421,57.585],[10.4448,57.540],
+ [10.476,57.510],[10.538,57.430],[10.5254,57.335],[10.5418,57.235],[10.4744,57.195],
+ [10.4176,57.148],[10.380,57.090],[10.3544,57.028],[10.337,56.995],[10.325,56.975],
+ [10.2627,56.885],[10.2755,56.805],[10.300,56.7575],[10.330,56.705],[10.340,56.690],
+ [10.3485,56.655],[10.352,56.625],[10.330,56.612],[10.370,56.575]];
+/* Limfjorden fra Hals til Thyborøn, lagt gennem DMI's målere og de målte bredder. */
+const FJORD=[[10.335,56.993],[10.3084,56.9901],[10.280,56.988],[10.200,57.005],[10.150,57.012],
+ [10.052,57.0486],[9.9576,57.0525],[9.860,57.055],[9.750,57.035],[9.640,56.995],
+ [9.520,57.010],[9.4017,57.0284],[9.300,56.995],[9.2459,56.9678],[9.170,56.930],
+ [9.050,56.925],[8.900,56.945],[8.6941,56.9538],[8.630,56.880],[8.520,56.780],
+ [8.380,56.720],[8.215,56.705]];
+const MARIAGER=[[9.8038,56.6388],[9.855,56.643],[9.920,56.652],[9.985,56.661],[10.0384,56.6829],
+ [10.115,56.712],[10.200,56.705],[10.270,56.692],[10.335,56.690]];
+const RANDERS=[[10.335,56.612],[10.300,56.606],[10.250,56.590],[10.200,56.570]];
 
 function smooth(pts){                       // blød kurve gennem punkterne
   const p=pts.map(([lo,la])=>[px(lo),py(la)]);
@@ -968,8 +1019,9 @@ function smooth(pts){                       // blød kurve gennem punkterne
 }
 
 function drawMap(res){
-  // landmassen: kysten lukket mod syd og øst, så Vendsyssel bliver en flade
-  const land=smooth(COAST)+' L'+px(10.75)+' '+py(56.90)+' L'+px(8.46)+' '+py(56.90)+' Z';
+  // landmassen: kysten lukket langs kortets nederste kant
+  const c0=COAST[0], c1=COAST[COAST.length-1];
+  const land=smooth(COAST)+' L'+px(c1[0]).toFixed(1)+' '+(MAPH+4)+' L'+px(c0[0]).toFixed(1)+' '+(MAPH+4)+' Z';
   const pins=res.map(a=>{
     const on=a.spot.id===sel, r=on?11:8;
     return '<circle class="pin'+(on?' sel':'')+'" cx="'+px(a.spot.lon).toFixed(1)+
@@ -985,6 +1037,8 @@ function drawMap(res){
     '<svg viewBox="0 0 '+MAPW+' '+MAPH+'" role="img" aria-label="Kort over Nordjyllands kyster">'+
     '<path class="land" d="'+land+'"/>'+
     '<path class="fjord" d="'+smooth(FJORD)+'"/>'+
+    '<path class="fjord" d="'+smooth(MARIAGER)+'"/>'+
+    '<path class="fjord" d="'+smooth(RANDERS)+'"/>'+
     '<path class="coast" d="'+smooth(COAST)+'"/>'+
     pins+lab+'</svg>';
   document.querySelectorAll('#map .pin').forEach(c=>
@@ -1029,28 +1083,31 @@ function render(){
   document.querySelectorAll('.rrow').forEach(b=>b.onclick=()=>{sel=b.dataset.s;render();});
 
   document.getElementById('note').innerHTML=
-    '<b>Målt vind:</b> DMI Frie Data, otte stationer, ti minutters opløsning, fire døgn '+
+    '<b>Målt vind:</b> DMI Frie Data, ti stationer, ti minutters opløsning, fire døgn '+
     'bagud. Hver kyst får et afstandsvægtet gennemsnit af de nærmeste tre inden for 90 km: '+
-    'de åbne kyster kun fra fyrene Hanstholm, Hirtshals og Skagen, som står ved havet, '+
-    'fjordkysterne kun fra Silstrup, Rønbjerg, Flyvestation Aalborg, Tylstrup og Stenhøj, '+
+    'de åbne kyster kun fra Hanstholm Fyr, Hirtshals Fyr, Skagen Fyr og Anholt Havn, som står ved havet, '+
+    'fjordkysterne kun fra Silstrup, Rønbjerg, Flyvestation Aalborg, Tylstrup, Stenhøj og Års Syd, '+
     'der ligger inde i landet og dermed er lige så afskærmede som fjorden selv. '+
     'De målte timer overskriver prognosen bagud, så fase 1 vurderes på hvad der faktisk skete. '+
-    'Seks af DMI’s nordjyske stationer svarer tomt og er udeladt. '+
+    'Ni af DMI’s stationer i området svarer tomt og er udeladt, blandt dem Thyborøn og Vestervig; '+
+    'derfor får Agger og resten af Thy vinden fra Hanstholm Fyr, 30–45 km væk. '+
     'Vind, vindstød og solnedgang: Open-Meteo, fire døgns historik og seks frem. '+
-    'Kystretninger mærket ✓ er aflæst direkte på Ravudsigtens kort og regnes som rigtige. '+
-    'De mærket ~ er sat efter kystlinjen og er mit skøn — de mangler endnu: Hanstholm, Vigsø, '+
-    'Bulbjerg, Thorup, Tranum, Saltum, Grenen, Skagen Sønderstrand, Ålbæk, Storvorde, '+
-    'Løgstør og Thisted. '+
+    '<b>Kystretning og placering:</b> alle steder er målt (✓). Nogle er aflæst på Ravudsigtens kort, '+
+    'resten har jeg regnet ud fra EMODnet’s havbundsdata: kystlinjen findes på to parallelle snit '+
+    'nogle km fra hinanden, og retningen er vinkelret ud mod vandet. Samme metode rammer Ravudsigten '+
+    'inden for 3–8° ved Løkken, Hou og Tversted. De fleste prikker er rykket ud på selve strandkanten. '+
+    'Slettestrand afviger: havbunden giver 0° (nord), Ravudsigten 336°; appen bruger målingen. '+
     'Vurderingen følger din skala: over 10 m/s river løs, 15–16 er meget godt, '+
     'og vinduet åbner når vinden falder under 10 igen. '+
     'Intet fast jagtvindue — appen gennemløber alle døgnets timer og viser det bedste. '+
     'Mørke straffer ikke scoren; det står kun på kortet, så du ved om ravlampen virker. '+
-    'Vandstand: DMI’s tidevandstabel fra tolv stationer, hvert tiende minut, og målt stand '+
-    'i cm over DVR90 fra Hanstholm, Hirtshals og Frederikshavn, plus DMI\u2019s registrerede stand '+
-    'fra Thisted og Haverslev i Limfjorden. Fremad regnes tidevand plus vindstuvning plus det målte overskud nu, som '+
+    'Vandstand: DMI’s tidevandstabel fra '+TSTN.length+' stationer, hvert tiende minut, og målt stand '+
+    'i cm over DVR90 fra Hanstholm, Hirtshals, Frederikshavn, Udbyhøj og Hobro, plus DMI\u2019s registrerede stand '+
+    'fra Thyborøn, Als Odde, Thisted og Haverslev. Fremad regnes tidevand plus vindstuvning plus det målte overskud nu, som '+
     'klinger af over et døgn. Prøvet af mod Hirtshals 12. oktober: 2,3 cm gennemsnitlig fejl over '+
-    'tolv timer. Skagen, Hals, Egense og Storvorde har kun tabellen; der er kurvens form pålidelig, '+
-    'niveauet mindre. DMI har ingen offentlig måler ved Hals Havn. Vil du selv sætte vandstanden, så vælg i stedet for Automatisk.';
+    'tolv timer. Skagen, Hals, Egense, Storvorde og Hadsund har kun tabellen; der er kurvens form pålidelig, '+
+    'niveauet mindre. Mariager Fjord regnes for sig selv, adskilt fra Limfjorden. '+
+    'DMI har ingen offentlig måler ved Hals Havn. Vil du selv sætte vandstanden, så vælg i stedet for Automatisk.';
 }
 
 /* Kort begrundelse for hvorfor netop dette tidsrum vandt døgnets gennemgang. */
@@ -1125,7 +1182,7 @@ function detailCard(d,nn){
       const ins=d.rs.beach+d.rs.near;
       why+=' <b>Kun '+ins+'% kan nås</b> \u2014 '+
         (d.rs.reach>0 ? 'resten ligger længere ude end de cirka '+d.rs.reach+' m, du kan gå ud.'
-                      : 'resten ligger ude i vandet, og på '+COASTNAME[coastType(d.spot)]+' kommer du ikke ud i dag.');
+                      : 'resten ligger ude i vandet, og på '+coastName(d.spot)+' kommer du ikke ud i dag.');
     }
   }
 
@@ -1246,7 +1303,7 @@ function waterPanel(d){
       const tr = tn!=null&&t1!=null ? (t1-tn<=-1?'faldende':t1-tn>=1?'stigende':'vender') : '';
       head='Tidevand ved '+w.tide.t.n+(tr?' · '+tr:'');
       body='Ingen måling her — kun DMI’s tidevandstabel for '+w.tide.t.n+
-        (d.spot.ff<0.5?'. De eneste fjordmålere, Thisted og Haverslev, ligger for langt væk til at '+
+        (d.spot.ff<0.5?'. Nærmeste måler i '+fjordName(d.spot)+' ligger for langt væk til at '+
           'sige noget om vandet her. I fjorden er det vinden, ikke tidevandet, der flytter mest '+
           '\u2014 så niveauet kan ligge et stykke fra kurven.'
          :'. Nærmeste måler er for langt væk til at hænge kurven op på.');
