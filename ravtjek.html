@@ -770,14 +770,15 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   const comp=onshore(dir,s.f), compWind=ws*comp;
 
   const energy=Math.min(1,peak/16), duration=Math.min(1,sustained/14);
-  /* Raven skal have mindst 10 timer efter blæsten løjede, før den er inde.
-     Derefter bliver den liggende, så længe vinden er svag; driftmodellen
-     tager sig af at den trækkes ud, hvis vinden stiger. Langsomt aftagende
-     efter tre døgn, fordi den bliver samlet op og sandet til.            */
+  /* Bedst når der er gået 10 timer, siden blæsten løjede af, men ikke et
+     krav: lige efter giver halv score, og den stiger jævnt op til fuld ved
+     10 timer. Derefter bliver raven liggende, så længe vinden er svag;
+     driftmodellen tager sig af at den trækkes ud, hvis vinden stiger.
+     Langsomt aftagende efter tre døgn, fordi den bliver samlet op.     */
   let timing=0.05;
   if(hoursSince!==null){
     const h=hoursSince;
-    timing = h<3 ? 0.15 : h<10 ? 0.15+(h-3)/7*0.85 : 1.00;
+    timing = 0.5 + 0.5*Math.min(1, h/10);
     if(h>72) timing*=Math.max(0.3, Math.exp(-(h-72)/96));
   }
   const calm = compWind<0?1.00 : compWind<4?0.88 : compWind<8?0.70 : 0.50;
@@ -1106,7 +1107,7 @@ function detailCard(d,nn){
         'Den skal have hård vind fra omkring '+card(d.spot.f)+' ('+d.spot.f+'\u00b0) for at komme i spil.';
   } else {
     const t=d.hoursSince;
-    const tw = t<10 ? 'kun '+t+' timer siden blæsten løjede af \u2014 raven er ikke nået ind endnu; det tager typisk mindst 10 timer'
+    const tw = t<10 ? 'kun '+t+' timer siden blæsten løjede af \u2014 der kan godt ligge noget, men det bliver bedre, når der er gået omkring 10 timer'
       : t<=72 ? t+' timer siden blæsten løjede af, så raven har haft tid til at komme ind'
       : t+' timer siden blæsten løjede af. Så længe vinden holder sig svag, bliver raven liggende, men den bliver samlet op og sander til';
     why = d.peak.toFixed(1)+' m/s effektiv pålandsvind på toppen, '+d.sustained+
