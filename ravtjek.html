@@ -682,11 +682,83 @@ async function loadWater(){
   };
 
   const ids=[...need], obsSt=TSTN.filter(t=>t.obs), obsIds=obsSt.map(t=>t.id);
-  const [P,O]=await Promise.all([Promise.all(ids.map(pred)), Promise.all(obsSt.map(obs))]);
-  const out={pred:{}, obs:{}}; let any=false;
+  const tideIds=[...new Set(SPOTS.map(s=>{ const w=waterSrc(s); return w.tide?w.tide.t.id:null; }).filter(Boolean))];
+  const [P,O,DK]=await Promise.all([Promise.all(ids.map(pred)), Promise.all(obsSt.map(obs)),
+                                    loadDkss(tideIds)]);
+  const out={pred:{}, obs:{}, dk:{}, dkInfo:DK.info}; let any=false;
   ids.forEach((id,i)=>{ if(P[i]){ out.pred[id]=P[i]; any=true; } });
   obsIds.forEach((id,i)=>{ if(O[i]){ out.obs[id]=O[i]; any=true; } });
+  /* DMI's egen prognose bruges kun hvor tidevandstabellen kan afgøre,
+     om den indeholder tidevandet (hældning mod tabellen > 0,5). */
+  /* Afgørelsen tages samlet for alle stationer: tidevandet er småt i
+     Kattegat, så én station alene kan ikke afgøre det. Hver stations
+     serie trækkes fra sin egen middelværdi, så sammenligningen gælder
+     udsvingene. */
+  let sn=0, sd=0, np=0; const lim=Date.now()+48*3600e3;
+  Object.keys(DK.data).forEach(id=>{
+    const D=DK.data[id], T=out.pred[id]; if(!T) return;
+    const xs=[], ys=[];
+    D.t.forEach((t,i)=>{ if(t>=Date.now()-6*3600e3 && t<=lim){ const tv=tideAt(T,t); if(tv!=null){ xs.push(tv); ys.push(D.v[i]); } } });
+    if(xs.length<12) return;
+    const mx=xs.reduce((a,c)=>a+c,0)/xs.length, my=ys.reduce((a,c)=>a+c,0)/ys.length;
+    xs.forEach((x,i)=>{ sn+=(x-mx)*(ys[i]-my); sd+=(x-mx)*(x-mx); }); np+=xs.length;
+  });
+  const slope = sd>0 ? sn/sd : 0;
+  const mode = np>=48 && slope>0.5 ? 'total' : 'surge';
+  DK.info.slope=Math.round(slope*100)/100;
+  Object.keys(DK.data).forEach(id=>{ if(out.pred[id]){ DK.data[id].mode=mode; out.dk[id]=DK.data[id]; } });
+  DK.info.used=Object.keys(out.dk).length;
   return any?out:null;
+}
+
+/* ============ DMI's havmodel (DKSS) ============
+   forecastedr, uden nøgle. sea-mean-deviation er havets afvigelse fra
+   middelvandstand i meter; current-u/-v er strømmen mod øst/nord i m/s.
+   Et punkt pr. tidevandsstation: først de indre farvande, så Nordsøen.
+   Fejler det (grænse for kald, punkt på land), bruges mit eget skøn.  */
+const EDR='https://opendataapi.dmi.dk/v1/forecastedr/collections/';
+async function loadDkss(ids){
+  const info={tried:ids.length, ok:0, limit:false, used:0};
+  const data={};
+  const one=async(st,col)=>{
+    if(info.limit) return null;
+    const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),10000);
+    try{
+      const r=await fetch(EDR+col+'/position?coords='+encodeURIComponent('POINT('+st.lon+' '+st.lat+')')+
+        '&parameter-name=sea-mean-deviation,current-u,current-v&f=CoverageJSON',{signal:ctl.signal});
+      if(r.status===429){ info.limit=true; return null; }
+      if(!r.ok) return null;
+      let c=await r.json(); if(c.type==='CoverageCollection') c=(c.coverages||[])[0];
+      if(!c||!c.domain||!c.ranges) return null;
+      const T=((c.domain.axes||{}).t||{}).values||[];
+      const rg=n=>c.ranges[n]&&c.ranges[n].values;
+      const sl=rg('sea-mean-deviation'); if(!sl) return null;
+      const t=[], v=[], cu=[], cv=[], U=rg('current-u'), V=rg('current-v');
+      T.forEach((x,i)=>{ const ms=Date.parse(x), s=sl[i];
+        if(!isNaN(ms) && s!=null && isFinite(s)){ t.push(ms); v.push(s*100);
+          cu.push(U&&U[i]!=null?U[i]:null); cv.push(V&&V[i]!=null?V[i]:null); } });
+      if(t.length<24 || v.some(x=>Math.abs(x)>400)) return null;
+      return {t, v, cu, cv, col};
+    }catch(e){ return null; }
+    finally{ clearTimeout(to); }
+  };
+  const list=ids.map(id=>TSTN.find(t=>t.id===id)).filter(Boolean);
+  for(let i=0;i<list.length;i+=4){
+    await Promise.all(list.slice(i,i+4).map(async st=>{
+      const d=(await one(st,'dkss_idw'))||(await one(st,'dkss_nsbs'));
+      if(d){ data[st.id]=d; info.ok++; }
+    }));
+    if(info.limit) break;
+  }
+  return {data, info};
+}
+
+/* Strøm ved et tidspunkt fra DKSS: {sp m/s, to grader (retning vandet løber mod)} */
+function dkCurrent(D,when){
+  if(!D||!D.cu) return null;
+  const u=tideAt({t:D.t,v:D.cu.map(x=>x==null?0:x)},when), v=tideAt({t:D.t,v:D.cv.map(x=>x==null?0:x)},when);
+  if(u==null||v==null) return null;
+  return {sp:Math.hypot(u,v), to:(Math.atan2(u,v)*180/Math.PI+360)%360};
 }
 
 /* Tidevand ved et tidspunkt, lineært mellem tabelværdierne. */
@@ -724,6 +796,25 @@ function levelAt(rec,i){
   if(ni<0) return null;
   const at=new Date(T[i]+':00');
   const tv=tideAt(P,at); if(tv==null) return null;
+  /* DMI's havmodel først, hvis den er nået frem og dækker tidspunktet */
+  const D = WL.dk && WL.dk[w.tide.t.id];
+  if(D){
+    const k=tideAt(D,at), Ob=w.obs?WL.obs[w.obs.t.id]:null;
+    if(k!=null){
+      const reg = !!(w.obs && w.obs.t.obs==='sea_reg');
+      if(D.mode==='total'){
+        const k0 = Ob?tideAt(D,Ob.at):null;
+        if(Ob && k0!=null) return {v:Ob.now+k-k0, anchored:true, tide:tv, reg, src:'dkss'};
+        return {v:k, anchored:false, tide:tv, reg:false, src:'dkss'};
+      }
+      /* havmodellen giver kun stuvningen: læg tidevandet til */
+      const Po=w.obs?WL.pred[w.obs.t.id]:null;
+      let rest=null;
+      if(Ob&&Po){ const tn=tideAt(Po,Ob.at), k0=tideAt(D,Ob.at); if(tn!=null&&k0!=null) rest=Ob.now-tn-k0; }
+      const h=Math.max(0,i-ni);
+      return {v:tv+k+(rest==null?0:rest*Math.exp(-h/24)), anchored:rest!=null, tide:tv, reg, src:'dkss'};
+    }
+  }
   let rest=null;
   if(w.obs){
     const O=WL.obs[w.obs.t.id], Po=WL.pred[w.obs.t.id];
@@ -1109,8 +1200,9 @@ function render(){
     'Mørke straffer ikke scoren; det står kun på kortet, så du ved om ravlampen virker. '+
     'Vandstand: DMI’s tidevandstabel fra '+TSTN.length+' stationer, hvert tiende minut, og målt stand '+
     'i cm over DVR90 fra Hanstholm, Hirtshals, Frederikshavn, Udbyhøj, Grenå og Hobro, plus DMI\u2019s registrerede stand '+
-    'fra Thorsminde, Ferring, Thyborøn, Als Odde, Thisted og Haverslev. Fremad regnes tidevand plus vindstuvning plus det målte overskud nu, som '+
-    'klinger af over et døgn. Prøvet af mod Hirtshals 12. oktober: 2,3 cm gennemsnitlig fejl over '+
+    'fra Thorsminde, Ferring, Thyborøn, Als Odde, Thisted og Haverslev. Fremad bruges DMI’s havmodel (DKSS, forecastedr), når den svarer: '+
+    'dens ændring i vandstand hængt op på målingen nu, og dens strøm. Svarer den ikke, regnes '+
+    'tidevand plus vindstuvning plus det målte overskud nu, som klinger af over et døgn. Prøvet af mod Hirtshals 12. oktober: 2,3 cm gennemsnitlig fejl over '+
     'tolv timer. Skagen, Hals, Egense, Storvorde, Hadsund og Læsø har kun tabellen; der er kurvens form pålidelig, '+
     'niveauet mindre. Mariager Fjord regnes for sig selv, adskilt fra Limfjorden. '+
     'DMI har ingen offentlig måler ved Hals Havn. Vil du selv sætte vandstanden, så vælg i stedet for Automatisk. '+
@@ -1326,8 +1418,21 @@ function waterPanel(d){
         else if(wf.mean>=35) body+=' Så højt vand dækker opskylslinjen — hold dig til stranden.';
       }
     }
-    body += O ? ' Fremad: tidevandstabellen plus min vindstuvning, plus det målte overskud nu, som klinger af over et døgn.'
-              : ' Kurven er tidevandstabellen plus min vindstuvning.';
+    const DKd = WL.dk && WL.dk[w.tide.t.id];
+    if(DKd){
+      body += O ? ' Fremad: DMI’s havmodel (DKSS) for ændringen i vandstand, hængt op på målingen nu.'
+                : ' Fremad: DMI’s havmodel (DKSS) for '+w.tide.t.n+'.';
+      const cu=dkCurrent(DKd,new Date());
+      if(cu && cu.sp>=0.03){
+        const nm=['nord','nordøst','øst','sydøst','syd','sydvest','vest','nordvest'][Math.round(cu.to/45)%8];
+        body += ' Strøm ved '+w.tide.t.n+' nu: '+cu.sp.toFixed(2).replace('.',',')+' m/s mod '+nm+' (DMI).';
+      }
+    } else {
+      body += O ? ' Fremad: tidevandstabellen plus min vindstuvning, plus det målte overskud nu, som klinger af over et døgn.'
+                : ' Kurven er tidevandstabellen plus min vindstuvning.';
+      if(WL.dkInfo) body += WL.dkInfo.limit ? ' DMI’s havmodel afviste kaldet (for mange), så det her er mit eget skøn.'
+                                            : ' DMI’s havmodel gav intet for dette punkt, så det her er mit eget skøn.';
+    }
     sp=spark(near?O.pts:null, fut, win, ni>=0?new Date(T[ni]+':00'):null,
              near?'skønnet':(O?'skønnet for '+d.spot.n:'tidevand + stuvning'));
   }
