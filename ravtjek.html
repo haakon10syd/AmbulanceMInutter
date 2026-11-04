@@ -56,6 +56,7 @@
   .fjord{fill:none;stroke:#2b4e5e;stroke-width:2.5;stroke-dasharray:7 6;stroke-linecap:round}
   .pin{stroke:#0a1a24;stroke-width:2;cursor:pointer}
   .pin.sel{stroke:var(--sand);stroke-width:3}
+  .dep{fill:#f2c230;stroke:#0a1a24;stroke-width:1.2;pointer-events:none}
   .plabel{fill:var(--sand);font-size:15px;font-family:var(--sans);font-weight:600;
     paint-order:stroke;stroke:#0a1a24;stroke-width:4;pointer-events:none}
 
@@ -467,7 +468,7 @@ const RANK_TOP=15;
 const FURL='https://api.open-meteo.com/v1/forecast?latitude='+SPOTS.map(s=>s.lat).join(',')+
   '&longitude='+SPOTS.map(s=>s.lon).join(',')+
   '&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation'+
-  '&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FCopenhagen&past_days=4&forecast_days=6';
+  '&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FCopenhagen&past_days=14&forecast_days=6';
 
 async function load(){
   if(loading) return; loading=true;
@@ -919,6 +920,40 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   }
   const kf = s.k || 1;
 
+  /* Sådan løjede det af. Bedst når vinden falder jævnt; slår den brat om
+     til hård fralandsvind, trækkes noget af raven ud igen.               */
+  let easeF=1, easeHow=null;
+  if(eased>=0){
+    const j=Math.min(start, eased+6);
+    if(j>eased && H.wind_speed_10m[eased]!=null && H.wind_speed_10m[j]!=null){
+      let off=false;
+      for(let i=eased+1;i<=j;i++){ const w=H.wind_speed_10m[i];
+        if(w!=null && w>=8 && onshore(H.wind_direction_10m[i], s.f)<-0.3) off=true; }
+      const rate=(H.wind_speed_10m[eased]-H.wind_speed_10m[j])/(j-eased);
+      if(off){ easeF=0.80; easeHow='brat'; }
+      else if(rate>2.5){ easeF=0.90; easeHow='hurtigt'; }
+      else easeHow='jævnt';
+    }
+  }
+
+  /* Depot: hård pålandsvind for 4–14 døgn siden. Raven derfra kan ligge
+     ude ved revlen endnu og kommer ind, når der igen er moderat pålandsvind.
+     Vægten halveres for hver uge, der er gået.                          */
+  let dep=0, depLast=-1, depHours=0;
+  for(let i=Math.max(0,start-336); i<start-96; i++){
+    const ws_=H.wind_speed_10m[i]; if(ws_==null) continue;
+    const c=onshore(H.wind_direction_10m[i], s.f), eff=c>0?ws_*c*s.ff:0;
+    if(eff>=10){ dep+=Math.min(1.6,eff/12)*Math.pow(0.5,(start-i-96)/168); depLast=i; depHours++; }
+  }
+  const depot=Math.min(1, dep/14);
+  /* frigivelse: timer med moderat pålandsvind (5–10 m/s) det sidste døgn */
+  let relH=0;
+  for(let i=Math.max(0,last-23); i<=last; i++){
+    const ws_=H.wind_speed_10m[i]; if(ws_==null) continue;
+    const c=onshore(H.wind_direction_10m[i], s.f), eff=c>0?ws_*c*s.ff:0;
+    if(eff>=5 && eff<10) relH++;
+  }
+
   /* fase 2: forholdene i selve vinduet */
   let ws=0,gu=0,dirs=[],pr=0,n=0;
   for(let i=start;i<=last;i++){
@@ -949,7 +984,14 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
   const rc=reachFor(s, ws, compWind, wf);
   const rs=reachSplit(drift(rec,last), rc.m), rf=reachFactor(rs);
   if(rs) rs.why=rc.why;
-  const score=Math.round((0.5*energy+0.5*duration)*timing*calm*wf.f*rf*dirF*kf*100)/10;
+  const stormScore=(0.5*energy+0.5*duration)*timing*calm*wf.f*rf*dirF*kf*easeF*10;
+  /* Depotet giver højst 6 af 10: det er et kvalificeret gæt, ikke en frisk storm.
+     Lavt vand (under DVR90) frigiver også noget, selv uden vind. */
+  const lowW = wf.auto && wf.anchored && !wf.reg && wf.mean<=-10 ? 0.5 : 0;
+  const rel = Math.max(Math.min(1, relH/6), lowW);
+  const depScore=6*depot*rel*calm*wf.f*kf;
+  const via = depScore>stormScore ? 'depot' : 'storm';
+  const score=Math.round(Math.max(stormScore,depScore)*10)/10;
 
   /* mørke straffer ikke længere — det afgør kun om ravlampen virker.
      Både aftenen efter solnedgang og timerne før daggry tælles som mørke,
@@ -964,6 +1006,7 @@ function scoreWindow(rec,H,T,start,darkFrom,lightFrom){
 
   return {spot:s, score, peak, hoursSince, sustained, ws, gu, dir, comp, compWind,
           rain:pr, startIdx:start, stopIdx:last, dark, wf, rf, rs, dirF, dirTurn, kf,
+          easeF, easeHow, depot, depHours, depAge: depLast<0?null:start-depLast, relH, rel, via,
           from:T[start].slice(11,16),
           to:pad(t1.getHours())+':00'};
 }
@@ -1005,7 +1048,54 @@ function assess(rec,nk){
   best.noLight = !bL;          /* intet dagslys tilbage i døgnet */
   best.noDark  = !bD;
   best.sunset=sunset; best.sunrise=sunrise; best.darkFrom=darkFrom;
+  best.ls=longshore(rec,best);
   return best;
+}
+
+/* ============ strøm langs kysten ============
+   Vindens komposant langs kysten driver en langsgående strøm, som flytter
+   raven langs stranden. Regnet over blæsten og tiden efter (højst to døgn).
+   Har DMI's havmodel strøm for den nærmeste station, bruges dens retning
+   langs kysten i stedet, når den er tydelig. Peger den mod en nabostrand
+   på samme slags kyst inden for 30 km, nævnes den.                       */
+function bearing(aLat,aLon,bLat,bLon){
+  const y=(bLon-aLon)*Math.cos((aLat+bLat)/2*Math.PI/180), x=bLat-aLat;
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;
+}
+function longshore(rec,d){
+  const s=rec.spot, H=rec.wx.hourly;
+  if(s.ff<0.5) return null;                     /* fjordene: for små til at sige noget */
+  const end=d.startIdx;
+  const from = d.hoursSince!=null ? Math.max(0,end-d.hoursSince-24)
+             : d.depAge!=null ? Math.max(0,end-d.depAge-24) : Math.max(0,end-24);
+  let sum=0,n=0;
+  for(let i=Math.max(from,end-48);i<end;i++){
+    const w=H.wind_speed_10m[i]; if(w==null||w<5) continue;
+    /* + = mod kystens retning +90° (med uret set fra havet mod land: f+90) */
+    sum += -Math.sin((H.wind_direction_10m[i]-s.f)*Math.PI/180)*w; n++;
+  }
+  let v = n? sum/n : 0, src='vind';
+  /* DMI's strøm, hvis den findes: snit over de sidste 12 timer */
+  if(WL && WL.dk && new Date(H.time[end]+':00')-Date.now()<24*3600e3){
+    const w=waterSrc(s), D=w.tide&&WL.dk[w.tide.t.id];
+    if(D && D.cu){
+      const b=(s.f+90)*Math.PI/180; let p=0,m=0;
+      for(let h=0;h<12;h++){ const c=dkCurrent(D,new Date(Date.now()-h*3600e3)); if(!c) continue;
+        p+=c.sp*Math.cos((c.to-(s.f+90))*Math.PI/180); m++; }
+      if(m && Math.abs(p/m)>=0.05){ v=Math.sign(p/m)*Math.max(2,Math.abs(v)); src='dmi'; }
+    }
+  }
+  if(Math.abs(v)<2) return {v, dir:null, src};
+  const dir=((v>0?s.f+90:s.f-90)+360)%360;
+  const ct=coastType(s);
+  let nb=null;
+  SPOTS.forEach(o=>{
+    if(o===s || coastType(o)!==ct) return;
+    const k=km(s.lat,s.lon,o.lat,o.lon); if(k<2||k>30) return;
+    const db=Math.abs(((bearing(s.lat,s.lon,o.lat,o.lon)-dir+540)%360)-180);
+    if(db<=50 && (!nb || k<nb.km)) nb={spot:o, km:k};
+  });
+  return {v, dir, nb, src};
 }
 
 /* ============ hvor ravet står ============
@@ -1075,6 +1165,11 @@ function driftPct(d){
 }
 function driftStrip(rec,a){
   const rs=a.rs;
+  if(!rs && a.via==='depot') return '<div class="drift"><p>Hvor ravet står</p>'+
+    '<div class="dist">Muligt depot ude ved revlen</div>'+
+    '<small>Fra blæsten for omkring '+Math.round(a.depAge/24)+' døgn siden. Revlerne flytter sig, så hvor '+
+    'langt ude det ligger, kan appen ikke sige. Det kommer ind med moderat pålandsvind eller blottes ved lavt vand; '+
+    'kig efter friske opskyl i vandkanten.</small></div>';
   if(!rs) return '<div class="drift"><p>Hvor ravet står</p>'+
     '<small>Der er ikke revet noget løs på denne kyst i de sidste fire døgn, så der er '+
     'ingen bestand at følge. Et pust over 10 m/s pålands skal til først.</small></div>';
@@ -1119,7 +1214,9 @@ function drawMap(res){
     const on=a.spot.id===sel, r=on?11:6.5;
     return '<circle class="pin'+(on?' sel':'')+'" cx="'+px(a.spot.lon).toFixed(1)+
       '" cy="'+py(a.spot.lat).toFixed(1)+'" r="'+r+'" fill="'+colFor(a.score)+
-      '" data-s="'+a.spot.id+'"><title>'+a.spot.n+' · '+a.score.toFixed(1)+'/10</title></circle>';
+      '" data-s="'+a.spot.id+'"><title>'+a.spot.n+' · '+a.score.toFixed(1)+'/10'+(a.depot>=0.35?' · muligt depot':'')+'</title></circle>'+
+      (a.depot>=0.35 ? '<circle class="dep" cx="'+(px(a.spot.lon)+r*0.75).toFixed(1)+'" cy="'+(py(a.spot.lat)-r*0.75).toFixed(1)+
+        '" r="'+(on?4.5:3)+'"/>' : '');
   }).join('');
   const top=res.find(a=>a.spot.id===sel);
   const lab=top?'<text class="plabel" x="'+
@@ -1170,7 +1267,7 @@ function render(){
     '<button class="rrow" aria-pressed="'+(x.spot.id===sel)+'" data-s="'+x.spot.id+'">'+
     '<i class="rdot" style="background:'+colFor(x.score)+'"></i>'+
     '<span class="rname"><b>'+x.spot.n+'</b><i>'+x.spot.a+' · vender mod '+
-      card(x.spot.f)+' '+x.spot.f+'°'+(x.spot.v?' ✓':' ~')+'</i></span>'+
+      card(x.spot.f)+' '+x.spot.f+'°'+(x.spot.v?' ✓':' ~')+(x.depot>=0.35?' · depot':'')+'</i></span>'+
     '<span class="rtid">'+x.from+'<i>'+(x.dark?'mørkt':'lyst')+'</i></span>'+
     '<span class="rsc" style="color:'+colFor(x.score)+'">'+x.score.toFixed(1)+'</span></button>').join('')+
     (res.length>RANK_TOP ? '<button class="rmore" id="rmore">'+
@@ -1187,7 +1284,11 @@ function render(){
     'De målte timer overskriver prognosen bagud, så fase 1 vurderes på hvad der faktisk skete. '+
     'Ti af DMI’s stationer i området svarer tomt og er udeladt, blandt dem Thyborøn, Vestervig og Vesterø på Læsø; '+
     'derfor får Thy vinden fra Hanstholm Fyr og Hvide Sande, Læsø fra Skagen og Anholt. '+
-    'Vind, vindstød og solnedgang: Open-Meteo, fire døgns historik og seks frem. '+
+    'Vind, vindstød og solnedgang: Open-Meteo, 14 døgns historik og seks frem. '+
+    '<b>Depot</b> (gul prik): hård pålandsvind for 4\u201314 døgn siden, vægten halveret pr. uge; det giver højst 6 af 10 og '+
+    'kræver moderat pålandsvind det sidste døgn eller lavt vand. <b>Langs kysten:</b> vindens komposant langs kysten '+
+    '(eller DMI\u2019s strøm, når den er tydelig) viser, hvilken vej ravet er skubbet. '+
+    'Slår vinden brat om til hård fralandsvind, når den løjer af, trækkes scoren ned. '+
     '<b>Kystretning og placering:</b> alle steder er målt (✓). Nogle er aflæst på Ravudsigtens kort, '+
     'andre regnet ud fra EMODnet’s havbundsdata (kystlinjen på to parallelle snit), og de nyeste '+
     'fra OpenStreetMaps kystlinje: retningen er vinkelret på kysten over 5 km omkring stedet. '+
@@ -1257,7 +1358,14 @@ function detailCard(d,nn){
   else { cls='v-wait'; word='VENT'; }
 
   let why;
-  if(d.hoursSince==null){
+  if(d.via==='depot'){
+    const dage=Math.round(d.depAge/24);
+    why='Ingen frisk storm de sidste fire døgn, men <b>muligt depot</b>: '+d.depHours+
+      ' timer med hård pålandsvind for omkring '+dage+' døgn siden. Noget af det rav kan stadig ligge ude ved revlen. '+
+      (d.relH>=3 ? 'Det sidste døgn har haft '+d.relH+' timer med moderat pålandsvind (5\u201310 m/s), som kan føre det ind.'
+                 : 'Lavt vand kan blotte noget af det.')+
+      ' Det er et kvalificeret gæt, så scoren går højst til 6. Regnet med '+d.wf.txt+'.';
+  } else if(d.hoursSince==null){
     why='Ingen hård pålandsvind (10 m/s eller mere) på denne kyst de sidste fire døgn \u2014 '+
         'kun '+d.peak.toFixed(1)+' m/s effektivt på toppen. Der er ikke revet noget løs. '+
         'Den skal have hård vind fra omkring '+card(d.spot.f)+' ('+d.spot.f+'\u00b0) for at komme i spil.';
@@ -1274,6 +1382,10 @@ function detailCard(d,nn){
     if(d.dirF<0.9)
       why+=' Vinden drejede mod '+(d.dirTurn<0?'syd':'nord')+', da den løjede af, og efter en vestenstorm '+
         'fører det raven længere '+(d.dirTurn<0?'sydpå':'nordpå')+' langs vestkysten.';
+    if(d.easeHow==='brat')
+      why+=' Vinden slog brat om til hård fralandsvind, da den løjede af \u2014 det trækker noget af raven ud igen.';
+    else if(d.easeHow==='hurtigt')
+      why+=' Vinden faldt hurtigt. Bedst er, når den løjer jævnt af, så det trækker lidt ned.';
     if(d.kf<1)
       why+=' Strømmen langs vestkysten går uden om strækningen ved Blokhus\u2013Rødhus og drejer først ind '+
         'igen et stykke før Hirtshals, så her kommer der mindre ind.';
@@ -1285,6 +1397,12 @@ function detailCard(d,nn){
     }
   }
 
+  if(d.ls && d.ls.dir!=null){
+    const nm=['nord','nordøst','øst','sydøst','syd','sydvest','vest','nordvest'][Math.round(d.ls.dir/45)%8];
+    why+=' <b>Langs kysten</b> har '+(d.ls.src==='dmi'?'DMI\u2019s strøm':'vinden')+' skubbet mod '+nm+
+      (d.ls.nb ? ' \u2014 kig også ved '+d.ls.nb.spot.n+', '+Math.round(d.ls.nb.km)+' km i den retning.'
+               : ', så ravet kan ligge et stykke den vej.');
+  }
   let danger='';
   if(d.compWind>=9){
     danger='<div class="danger"><b>Gå ikke i vandet.</b> '+d.compWind.toFixed(0)+
